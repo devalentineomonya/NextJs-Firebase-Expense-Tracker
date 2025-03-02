@@ -146,7 +146,7 @@ const FormSection = () => {
   );
 };
 
-export const CheckboxLinkGroup = ({
+const CheckboxLinkGroup = ({
   checked,
   onChange,
 }: {
