@@ -96,7 +96,7 @@ const SummaryTable = () => {
     <Card className="col-span-12 lg:col-span-8 ml-4 mt-6 rounded-lg bg-transparent flex flex-col shadow-[rgba(145,_158,_171,_0.2)_0px_0px_2px_0px,_rgba(145,_158,_171,_0.02)_0px_12px_24px_-4px]">
       <CardHeader className="p-0 m-0 pt-4 px-4">
         <h1 className="font-semibold text-lg">$10,230</h1>
-        <p className="text-[#7c8fac] text-sm mt-1">Expense</p>
+        <p className="text-[#7c8fac] text-sm">Expense</p>
       </CardHeader>
       <CardContent>
         <Table className="mt-6">
