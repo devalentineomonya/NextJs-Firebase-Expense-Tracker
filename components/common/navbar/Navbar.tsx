@@ -43,6 +43,17 @@ const Navbar = () => {
                 </Button>
               </NavigationMenuItem>
               <NavigationMenuItem>
+
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    className="bg-gray-800 dark:bg-white text-white hover:bg-gray-500 dark:text-gray-600 dark:hover:bg-gray-100 "
+                  >
+                    <GitHubLogoIcon />
+                  </Button>
+              
+              </NavigationMenuItem>
+              <NavigationMenuItem>
                 <NavigationMenuLink
                   href="https://github.com/devalentineomonya"
                   target="_blank"
