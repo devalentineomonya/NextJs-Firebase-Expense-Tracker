@@ -1,7 +1,8 @@
 # Expense Tracker 💸
 
-[![Next.js](https://img.shields.io/badge/Next.js-14.2.3-black?logo=next.js)](https://nextjs.org/)
-[![Firebase](https://img.shields.io/badge/Firebase-10.11.1-orange?logo=firebase)](https://firebase.google.com/)
+[![React](https://shields.io/badge/react-19.0.0-black?logo=react&style=for-the-badge)
+[![Next.js](https://img.shields.io/badge/Next.js-15.2.0-black?logo=next.js)](https://nextjs.org/)
+[![Firebase](https://img.shields.io/badge/Firebase-11.4.0-orange?logo=firebase)](https://firebase.google.com/)
 [![License](https://img.shields.io/badge/License-MIT-blue)](https://opensource.org/licenses/MIT)
 
 A modern expense tracking web application built with Next.js and Firebase, designed to help users manage their finances effectively.
