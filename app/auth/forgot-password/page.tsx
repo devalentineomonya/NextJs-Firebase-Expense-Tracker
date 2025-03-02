@@ -6,7 +6,7 @@ const FormSection = () => (
   <form className="mt-6">
     <InputField label="Email" id="email" type="email" />
 
-    <Button className="w-full bg-primary dark:bg-slate-950  dark:hover:bg-slate-900 text-white rounded-md py-2 hover:bg-primary-dark">
+    <Button   className="w-full bg-primary dark:bg-slate-950 dark:hover:bg-slate-900 text-white rounded-md py-2 hover:bg-primary-dark">
       Forgot Password
     </Button>
   </form>
