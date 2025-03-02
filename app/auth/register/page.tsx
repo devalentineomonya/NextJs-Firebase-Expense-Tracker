@@ -14,7 +14,10 @@ import { Logo } from "@/screens/auth/components/Logo";
 import { SocialLoginSection } from "@/screens/auth/components/SocialLoginSection";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { useCreateUserWithEmailAndPassword } from "react-firebase-hooks/auth";
+import {
+  useSendEmailVerification,
+  useCreateUserWithEmailAndPassword,
+} from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase/config";
 
 const registrationSchema = z.object({
@@ -31,6 +34,7 @@ type RegistrationFormValues = z.infer<typeof registrationSchema>;
 const FormSection = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [createUserWithEmailPassword] = useCreateUserWithEmailAndPassword(auth);
+  const [sendEmailVerification] = useSendEmailVerification(auth);
   const router = useRouter();
   const form = useForm<RegistrationFormValues>({
     resolver: zodResolver(registrationSchema),
@@ -49,11 +53,16 @@ const FormSection = () => {
         data.email,
         data.password
       );
+
       if (userData) {
-        toast.success("Registration successful... redirecting to dashboard");
-        router.push("/");
-      } else {
-        toast.error("Registration failed");
+        const success = await sendEmailVerification();
+
+        if (success) {
+          toast.success("Verification email sent! Please check your inbox.");
+          router.push("/auth/verify");
+        } else {
+          throw new Error("Failed to send verification email");
+        }
       }
     } catch (error: unknown) {
       if (error instanceof Error) {

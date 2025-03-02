@@ -15,18 +15,16 @@ import { toast } from "sonner";
 import { useSignInWithEmailAndPassword } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase/config";
 import { useRouter } from "next/navigation";
-// After
-import { use } from 'react'
+import { use } from "react";
+import { reload } from "firebase/auth";
 
-type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>
-
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 const loginSchema = z.object({
   email: z.string().min(1, "Email is required"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   rememberMe: z.boolean().optional().default(false),
 });
-
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
@@ -48,8 +46,17 @@ const FormSection = (props: { redirectUrl: string }) => {
     try {
       const userData = await signInWithEmailPassword(data.email, data.password);
       if (userData) {
-        toast.success("Login successful... redirecting to dashboard");
+        const user = userData.user;
+        await reload(user);
+        const newToken = await user.getIdToken(true);
 
+        await fetch("/api/update-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: newToken }),
+        });
+
+        toast.success("Login successful... redirecting to dashboard");
         router.push(props.redirectUrl);
       } else {
         toast.error("Invalid email or password");
@@ -136,15 +143,14 @@ const SignupLink = () => (
   </div>
 );
 
-export default function Login(props: {
-    searchParams: SearchParams
-  }) {
-    const searchParams = use(props.searchParams)
+export default function Login(props: { searchParams: SearchParams }) {
+  const searchParams = use(props.searchParams);
+  alert(searchParams.redirect); 
   return (
     <div className="min-h-screen bg-[#5d87ff20] dark:bg-darkprimary flex items-center justify-center p-4 w-full">
       <div className="w-full max-w-[450px] bg-white dark:bg-[#202936] shadow-[rgba(145,_158,_171,_0.3)_0px_0px_2px_0px,_rgba(145,_158,_171,_0.02)_0px_12px_24px_-4px]   rounded-md p-6">
         <Logo />
-        <SocialLoginSection  />
+        <SocialLoginSection />
         <div className="flex items-center gap-4">
           <Separator className="flex-1 dark:bg-gray-500" />
           <span className="text-muted-foreground">or sign in with</span>
