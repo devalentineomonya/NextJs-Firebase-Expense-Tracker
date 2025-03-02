@@ -11,16 +11,9 @@ export const Logo = () => (
         height={26}
         src="/logo.png"
         priority
-        className="block dark:hidden rtl:scale-x-[-1]"
+        className="block "
       />
-      <Image
-        alt="logo"
-        width={130}
-        height={26}
-        src="/logo.png"
-        priority
-        className="hidden dark:block rtl:scale-x-[-1]"
-      />
+
     </Link>
   </div>
 );
