@@ -1,6 +1,6 @@
 # Expense Tracker 💸
 
-[![React](https://shields.io/badge/react-19.0.0-black?logo=react&style=for-the-badge)
+[![React](https://shields.io/badge/react-19.0.0-black?logo=react)](https://react.dev/)
 [![Next.js](https://img.shields.io/badge/Next.js-15.2.0-black?logo=next.js)](https://nextjs.org/)
 [![Firebase](https://img.shields.io/badge/Firebase-11.4.0-orange?logo=firebase)](https://firebase.google.com/)
 [![License](https://img.shields.io/badge/License-MIT-blue)](https://opensource.org/licenses/MIT)
