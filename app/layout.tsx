@@ -1,8 +1,10 @@
-import Navbar from "@/components/common/navbar/Navbar";
+import type { Metadata } from "next";
 import "./globals.css";
+import Navbar from "@/components/common/navbar/Navbar";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { ThemeProvider } from "@/components/ui/theme-provider";
-import type { Metadata } from "next";
+import { Toaster } from "@/components/ui/sonner";
+import AuthProvider from "@/providers/auth-provider";
 
 export const metadata: Metadata = {
   title: "DeExpenser | Tracker Expenses",
@@ -21,15 +23,18 @@ export default function RootLayout({
       <body
         className={` ${plusJakartaSans.className} antialiased  bg-white dark:bg-gray-800`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <Navbar />
-          <main className="flex justify-center w-full ">{children}</main>
-        </ThemeProvider>
+        <AuthProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <Navbar />
+            <main className="flex justify-center w-full ">{children}</main>
+            <Toaster />
+          </ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   );
