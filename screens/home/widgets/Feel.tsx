@@ -33,7 +33,7 @@ const Feel = () => {
       <CardHeader className="flex items-center justify-between flex-row">
         <div className="flex flex-col">
           <h1 className="font-semibold text-lg">$10,230</h1>
-          <p className="text-[#7c8fac] text-sm mt-1">Expense</p>
+          <p className="text-[#7c8fac] text-sm">Expense</p>
         </div>
         <div className="w-11 aspect-square  bg-[#5d87ff1c] text-[#5d87ff] rounded-md grid place-items-center ">
             <Grip className="w-6 h-6" />
