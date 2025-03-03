@@ -3,24 +3,31 @@ import { Button } from "@/components/ui/button";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase/config";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
-const SignOutButton = () => {
+const SignOutButton = ({
+  setIsOpen,
+}: {
+  setIsOpen: (isOpen: boolean) => void;
+}) => {
   const router = useRouter();
 
   const handleSignOut = async () => {
+    const toastid = toast.loading("Signing out...");
     try {
-      await signOut(auth);
-
       await fetch("/api/auth/signout", { method: "POST" });
-
       window.sessionStorage.setItem("force-auth-check", "true");
-
-      router.push(`/auth/login?t=${Date.now()}`);
-
-      router.refresh();
-
+      signOut(auth).catch((error) =>
+        console.error("Firebase sign out error:", error)
+      );
+      await router.push(`/auth/login?t=${Date.now()}`);
+      setIsOpen(false);
+      setTimeout(async () => await router.refresh(), 500);
+      toast.dismiss(toastid);
     } catch (error) {
       console.error("Sign out error:", error);
+      toast.dismiss(toastid);
+      toast.error("Sign out failed");
     }
   };
 
