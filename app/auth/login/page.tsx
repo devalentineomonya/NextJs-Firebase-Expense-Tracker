@@ -30,6 +30,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 const FormSection = (props: { redirectUrl: string }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const [signInWithEmailPassword] = useSignInWithEmailAndPassword(auth);
   const router = useRouter();
   const form = useForm<LoginFormValues>({
@@ -57,7 +58,9 @@ const FormSection = (props: { redirectUrl: string }) => {
         });
 
         toast.success("Login successful... redirecting to dashboard");
-        router.push(props.redirectUrl);
+        setIsRedirecting(true);
+        console.log(props.redirectUrl);
+        return router.push(props.redirectUrl);
       } else {
         toast.error("Invalid email or password");
       }
@@ -124,10 +127,14 @@ const FormSection = (props: { redirectUrl: string }) => {
 
         <Button
           type="submit"
-          disabled={isLoading}
+          disabled={isLoading || isRedirecting}
           className="w-full bg-primary dark:bg-slate-950 dark:hover:bg-slate-900 text-white rounded-md py-2 hover:bg-primary-dark"
         >
-          {isLoading ? "Signing in..." : "Sign In"}
+          {isLoading
+            ? "Signing in..."
+            : isRedirecting
+            ? "Redirecting..."
+            : "Sign In"}
         </Button>
       </form>
     </FormProvider>
@@ -144,8 +151,11 @@ const SignupLink = () => (
 );
 
 export default function Login(props: { searchParams: SearchParams }) {
-  const searchParams = use(props.searchParams);
-  alert(searchParams.redirect); 
+  const searchParams = use(props?.searchParams) || { redirect: "/" };
+  if (typeof searchParams.redirect !== "string") {
+    searchParams.redirect = "/";
+  }
+
   return (
     <div className="min-h-screen bg-[#5d87ff20] dark:bg-darkprimary flex items-center justify-center p-4 w-full">
       <div className="w-full max-w-[450px] bg-white dark:bg-[#202936] shadow-[rgba(145,_158,_171,_0.3)_0px_0px_2px_0px,_rgba(145,_158,_171,_0.02)_0px_12px_24px_-4px]   rounded-md p-6">
@@ -156,7 +166,7 @@ export default function Login(props: { searchParams: SearchParams }) {
           <span className="text-muted-foreground">or sign in with</span>
           <Separator className="flex-1 dark:bg-gray-500" />
         </div>
-        <FormSection redirectUrl={searchParams.redirect as string} />
+        <FormSection redirectUrl={searchParams.redirect} />
         <SignupLink />
       </div>
     </div>
