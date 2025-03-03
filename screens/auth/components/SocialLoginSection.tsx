@@ -1,39 +1,57 @@
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import Image from "next/image";
+import {
+  useSignInWithGoogle,
+  useSignInWithGithub,
+} from "react-firebase-hooks/auth";
+import { auth } from "@/lib/firebase/config";
 
 const SocialButton = ({
-    provider,
-    iconSrc,
-  }: {
-    provider: string;
-    iconSrc: string;
-  }) => (
+  provider,
+  iconSrc,
+  loading,
+  onClick,
+}: {
+  provider: string;
+  iconSrc: string;
+  loading: boolean;
+  onClick: () => void;
+}) => {
+  return (
     <Button
+      disabled={loading}
       variant="outline"
       className="w-full flex gap-2 items-center py-6 px-4 border border-ld"
-      asChild
+      onClick={onClick}
     >
-      <Link href="/">
-        <Image
-          alt={provider}
-          width={18}
-          height={18}
-          src={iconSrc}
-          priority
-          className="dark:invert"
-        />
-        {provider}
-      </Link>
+      {loading ? (
+        <div className="animate-spin h-5 w-5 border-2 border-current border-t-transparent rounded-full" />
+      ) : (
+        <Image alt={provider} width={18} height={18} src={iconSrc} priority />
+      )}
+      {provider}
     </Button>
   );
+};
 
-  export const SocialLoginSection = () => (
+export const SocialLoginSection = () => {
+  const [signInWithGoogle, , googleLoading] = useSignInWithGoogle(auth);
+  const [signInWithGitHub, , githubLoading] = useSignInWithGithub(auth);
+
+  return (
     <div className="flex gap-4 my-6">
       <SocialButton
         provider="Google"
         iconSrc="/google.svg"
+        loading={googleLoading}
+        onClick={() => signInWithGoogle()}
       />
-      <SocialButton provider="Facebook" iconSrc="/facebook.svg" />
+      <SocialButton
+        provider="GitHub"
+        iconSrc="/github.svg"
+        loading={githubLoading}
+        onClick={() => signInWithGitHub()}
+      />
     </div>
   );
+};
