@@ -3,7 +3,7 @@ import { UserRound } from "lucide-react";
 
 const ProfileLink = () => (
   <Link
-    href="/apps/user-profile/profile"
+    href="/profile"
     className="cursor-pointer text-sm text-ld hover:text-primary focus:bg-hover focus:outline-none  py-2 flex justify-between items-center bg-hover group/link w-full"
   >
     <div className="flex items-center w-full">
