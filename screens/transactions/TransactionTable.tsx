@@ -178,15 +178,12 @@ const TransactionTable = () => {
       },
     },
   ];
-  // Example handlers (add these above your component)
   const handleEdit = (id: string) => {
     console.log("Edit transaction:", id);
-    // Add your edit logic here
   };
 
   const handleDelete = (id: string) => {
     console.log("Delete transaction:", id);
-    // Add your delete logic here
   };
 
   const table = useReactTable({
@@ -233,8 +230,6 @@ const TransactionTable = () => {
                 onChange={(e) => setGlobalFilter(e.target.value)}
               />
             </div>
-            <Button variant="outline">This Month</Button>
-            <Button variant="outline">Filtered By Status</Button>
           </div>
         </div>
         <div className="flex items-center flex-col gap-2">

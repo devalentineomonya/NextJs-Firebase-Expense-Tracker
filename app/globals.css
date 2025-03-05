@@ -81,6 +81,24 @@
 }
 
 
+html,
+body {
+  scrollbar-width: thin;
+  scrollbar-color: black #ccc;
+  scrollbar-track-color: #ccc;
+}
+
+
+.hide-scrollbar {
+  scrollbar-width:none;
+  
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+
 
 @layer base {
   * {
