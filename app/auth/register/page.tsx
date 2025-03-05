@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, FormProvider } from "react-hook-form";
 import * as z from "zod";
 import { FormField } from "@/components/ui/form";
-import { InputField } from "@/screens/auth/components/InputField";
+import { InputField } from "@/components/common/input/InputField";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";

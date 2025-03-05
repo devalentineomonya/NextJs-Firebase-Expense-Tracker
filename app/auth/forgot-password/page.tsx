@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { InputField } from "@/screens/auth/components/InputField";
+import { InputField } from "@/components/common/input/InputField";
 import { Logo } from "@/screens/auth/components/Logo";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";

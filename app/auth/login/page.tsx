@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { SocialLoginSection } from "@/screens/auth/components/SocialLoginSection";
-import { InputField } from "@/screens/auth/components/InputField";
+import { InputField } from "@/components/common/input/InputField";
 import { CheckboxLinkGroup } from "@/screens/auth/components/CheckboxLinkGroup";
 import { Logo } from "@/screens/auth/components/Logo";
 import { Separator } from "@/components/ui/separator";
