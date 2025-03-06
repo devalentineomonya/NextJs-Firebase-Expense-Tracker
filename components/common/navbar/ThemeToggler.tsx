@@ -11,7 +11,7 @@ const ThemeToggler = () => {
     <Button
     className="dark:bg-gray-800 bg-white dark:text-white dark:hover:bg-gray-700 text-gray-600 hover:bg-gray-100"
       onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-      variant="ghost"
+      variant="outline"
       size="icon"
     >
       {theme === "light" ? <Moon size={24} /> : <Sun size={24} />}

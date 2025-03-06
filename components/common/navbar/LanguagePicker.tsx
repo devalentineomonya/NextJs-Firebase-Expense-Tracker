@@ -20,7 +20,7 @@ const LanguagePicker = () => {
         <Button
           className="dark:bg-gray-800 bg-white dark:text-white dark:hover:bg-gray-700 text-gray-600 hover:bg-gray-100"
           size="icon"
-          variant="ghost"
+          variant="outline"
         >
           <US title="United States" />
         </Button>
