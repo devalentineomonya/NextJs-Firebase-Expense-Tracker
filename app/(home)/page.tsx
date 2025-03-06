@@ -11,7 +11,7 @@ import Weekly from "@/screens/home/widgets/Weekly";
 import ExpenseSavingsRevenue from "@/screens/home/widgets/ExpenseSavingsRevenue";
 export default function Home() {
   return (
-    <main className="grid grid-cols-12 px-4 my-12 max-w-[1200px] ">
+    <main className="grid grid-cols-12 px-2 gap-4 my-12 max-w-[1200px] ">
       <HeroBanner />
       <Expenditure />
       <MonthlyIncome />
