@@ -29,7 +29,7 @@ const chartConfig = {
 
 const Feel = () => {
   return (
-    <Card className="lg:row-span-6 col-span-12 shadow-[rgba(145,_158,_171,_0.3)_0px_0px_2px_0px,_rgba(145,_158,_171,_0.02)_0px_12px_24px_-4px] rounded-md bg-transparent mt-5">
+    <Card className="lg:row-span-6 col-span-12 shadow-[rgba(145,_158,_171,_0.3)_0px_0px_2px_0px,_rgba(145,_158,_171,_0.02)_0px_12px_24px_-4px] rounded-md bg-transparent">
       <CardHeader className="flex items-center justify-between flex-row">
         <div className="flex flex-col">
           <h1 className="font-semibold text-lg">$10,230</h1>

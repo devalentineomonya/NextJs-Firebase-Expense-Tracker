@@ -30,7 +30,7 @@ const chartConfig = {
 
 const Visibility = () => {
   return (
-    <Card className="col-span-12 md:col-span-6 mr-2 shadow-[rgba(145,_158,_171,_0.3)_0px_0px_2px_0px,_rgba(145,_158,_171,_0.02)_0px_12px_24px_-4px] rounded-md bg-transparent p-4">
+    <Card className="col-span-12 md:col-span-6 shadow-[rgba(145,_158,_171,_0.3)_0px_0px_2px_0px,_rgba(145,_158,_171,_0.02)_0px_12px_24px_-4px] rounded-md bg-transparent p-4">
       <CardHeader className="p-0 pb-2  m-0" >
         <div className="w-full max-w-11 aspect-square bg-[#5d87ff1c] text-[#5d87ff] rounded-md grid place-items-center">
             <Grip className="w-6 h-6" />
