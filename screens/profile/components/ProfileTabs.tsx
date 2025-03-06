@@ -1,6 +1,6 @@
 "use client";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CircleUser, BellRing, ClipboardMinus } from "lucide-react";
+import { CircleUser, BellRing } from "lucide-react";
 import ProfileTab from "../widgets/ProfileTab";
 import NotificationTab from "../widgets/NotificationTab";
 import ProfileBanner from "./ProfileBanner";
@@ -27,13 +27,7 @@ const ProfileTabs = () => {
                   <BellRing className="w-6 h-6 sm:w-4 sm:h-4" />
                   <span className="hidden sm:block">Notifications</span>
                 </TabsTrigger>
-                <TabsTrigger
-                  value="transactions"
-                  className={TAB_OVERRIDE_CLASS}
-                >
-                  <ClipboardMinus className="w-6 h-6 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:block">Transactions</span>
-                </TabsTrigger>
+
               </TabsList>
             </div>
           </div>
