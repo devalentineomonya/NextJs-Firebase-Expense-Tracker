@@ -143,7 +143,7 @@ const FormSection = (props: { redirectUrl: string }) => {
 
 const SignupLink = () => (
   <div className="flex gap-2 text-base font-medium mt-6 justify-center">
-    <p>New to Modernize?</p>
+    <p>New to DeExpenser?</p>
     <Link href="/auth/register" className="text-primary text-sm font-medium">
       Create an account
     </Link>
