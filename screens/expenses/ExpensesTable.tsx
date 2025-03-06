@@ -24,19 +24,6 @@ import {
   Pencil,
   MoreVertical,
 } from "lucide-react";
-import { exportToCSV } from "@/lib/utils";
-import {
-  useReactTable,
-  getCoreRowModel,
-  getSortedRowModel,
-  getPaginationRowModel,
-  SortingState,
-  ColumnDef,
-  flexRender,
-} from "@tanstack/react-table";
-import TransactionPagination from "./TransactionPagination";
-import { Badge, BadgeProps } from "@/components/ui/badge";
-import { useTransactionModal } from "@/lib/zustand/use-transaction";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -54,6 +41,21 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { exportToCSV } from "@/lib/utils";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  getPaginationRowModel,
+  SortingState,
+  ColumnDef,
+  flexRender,
+} from "@tanstack/react-table";
+import { useState, useMemo, useCallback } from "react";
+import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
+import ExpensesPagination from "./ExpensesPagination";
+import { useExpenseModal } from "@/lib/zustand/use-expense";
 import { auth, firestore } from "@/lib/firebase/config";
 import {
   collection,
@@ -64,13 +66,11 @@ import {
   doc,
 } from "firebase/firestore";
 import { useCollection } from "react-firebase-hooks/firestore";
-import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useState, useMemo, useCallback } from "react";
+import { Expense } from "@/types/Expenses";
 import { toast } from "sonner";
-import { Transaction } from "@/types/Transactions";
 
-const TransactionTable = () => {
+const ExpensesTable = () => {
   const [user] = useAuthState(auth);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
@@ -81,35 +81,35 @@ const TransactionTable = () => {
     pageSize: 10,
   });
 
-  const transactionsQuery = user
+  const { onOpen, onEdit } = useExpenseModal();
+
+  const expensesQuery = user
     ? query(
-        collection(firestore, "transactions"),
+        collection(firestore, "expenses"),
         where("userId", "==", user.uid),
-        orderBy("date", "desc")
+        orderBy("dateSpent", "desc")
       )
     : null;
 
-  const [transactions, loading, error] = useCollection(transactionsQuery);
+  const [expenses, loading, error] = useCollection(expensesQuery);
 
-  const { onOpen, onEdit } = useTransactionModal();
-
-  const transactionsData = useMemo(
+  const expensesData = useMemo(
     () =>
-      transactions?.docs.map(
+      expenses?.docs.map(
         (doc) =>
           ({
             id: doc.id,
             ...doc.data(),
-          } as Transaction)
+          } as Expense)
       ) || [],
-    [transactions]
+    [expenses]
   );
 
   const handleEdit = useCallback(
-    (transaction: Transaction) => {
+    (expense: Expense) => {
       onEdit({
-        ...transaction,
-        date: transaction.date,
+        ...expense,
+        dateSpent: expense.dateSpent,
       });
     },
     [onEdit]
@@ -124,58 +124,47 @@ const TransactionTable = () => {
     if (!deletingId || !user) return;
 
     try {
-      await deleteDoc(doc(firestore, "transactions", deletingId));
-      toast.success("Transaction deleted successfully");
+      await deleteDoc(doc(firestore, "expenses", deletingId));
+      toast.success("Expense deleted successfully");
     } catch (error) {
-      console.error("Error deleting transaction:", error);
-      toast.error("Failed to delete transaction");
+      console.error("Error deleting expense:", error);
+      toast.error("Failed to delete expense");
     } finally {
       setDeleteDialogOpen(false);
       setDeletingId(null);
     }
   };
 
-  const columns: ColumnDef<Transaction>[] = [
+  const columns: ColumnDef<Expense>[] = [
     {
       accessorKey: "amount",
       header: "Amount",
       cell: ({ row }) => `KES ${row.original.amount.toFixed(2)}`,
     },
     {
-      accessorKey: "receiverName",
-      header: "Receiver Name",
+      accessorKey: "paymentMethod",
+      header: "Payment Mode",
+    },
+
+    {
+      accessorKey: "expenditureType",
+      header: "ExpenditureType",
+      cell: ({ row }) => <Badge>{row.original.expenditureType}</Badge>,
     },
     {
-      accessorKey: "receiver",
-      header: "Receiver Email",
+      accessorKey: "referenceNumber",
+      header: "Reference Number",
     },
     {
-      accessorKey: "paymentMode",
-      header: "Payment Method",
-    },
-    {
-      accessorKey: "date",
-      header: "Paid On",
-      cell: ({ row }) => format(row.original.date.toDate(), "PPPPpppp"),
-    },
-    {
-      accessorKey: "status",
-      header: "Status",
-      cell: ({ row }) => {
-        const status = row.original.status;
-        const variantMap: Record<string, BadgeProps["variant"]> = {
-          success: "success",
-          pending: "secondary",
-          failed: "destructive",
-        };
-        return <Badge variant={variantMap[status]}>{status}</Badge>;
-      },
+      accessorKey: "dateSpent",
+      header: "Date Spent",
+      cell: ({ row }) => format(row.original.dateSpent.toDate(), "PPPPpppp"),
     },
     {
       id: "actions",
       header: "Actions",
       cell: ({ row }) => {
-        const transaction = row.original;
+        const expense = row.original;
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -184,12 +173,12 @@ const TransactionTable = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleEdit(transaction)}>
+              <DropdownMenuItem onClick={() => handleEdit(expense)}>
                 <Pencil className="mr-2 h-4 w-4" />
                 Edit
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => handleDeleteClick(transaction.id)}
+                onClick={() => handleDeleteClick(expense.id)}
                 className="text-destructive"
               >
                 <Trash className="mr-2 h-4 w-4" />
@@ -203,7 +192,7 @@ const TransactionTable = () => {
   ];
 
   const table = useReactTable({
-    data: transactionsData || [],
+    data: expensesData,
     columns,
     state: {
       sorting,
@@ -219,18 +208,15 @@ const TransactionTable = () => {
   });
 
   const handleExport = () => {
-    const exportData = (transactionsData || []).map(
-      (transaction: Transaction) => ({
-        Amount: transaction.amount,
-        "Receiver Name": transaction.receiverName,
-        "Receiver Email": transaction.receiver,
-        "Payment Method": transaction.paymentMode,
-        Date: format(transaction.date.toDate(), "PPPPpppp"),
-        Status: transaction.status,
-      })
-    );
+    const exportData = expensesData.map((expense) => ({
+      Amount: expense.amount,
+      "Date Spent": format(expense.dateSpent.toDate(), "PPPPpppp"),
+      "Expenditure Type": expense.expenditureType,
+      "Payment Method": expense.paymentMethod,
+      "Reference Number": expense.referenceNumber,
+    }));
 
-    exportToCSV(exportData, "transactions");
+    exportToCSV(exportData, "expenses");
   };
 
   if (loading) {
@@ -245,7 +231,7 @@ const TransactionTable = () => {
   if (error) {
     return (
       <div className="max-w-md text-xs font-light text-red-500">
-        Error loading transactions: {error.message}
+        Error loading expenses: {error.message}
       </div>
     );
   }
@@ -254,7 +240,7 @@ const TransactionTable = () => {
     <Card className="shadow-none rounded-md border-none px-0">
       <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 px-0">
         <div className="space-y-2">
-          <CardTitle>All Transactions</CardTitle>
+          <CardTitle>All Expenses</CardTitle>
           <div className="flex items-center gap-4">
             <div className="relative">
               <SearchIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -268,9 +254,9 @@ const TransactionTable = () => {
           </div>
         </div>
         <div className="flex items-center flex-col gap-2">
-          <Button onClick={onOpen} variant="outline">
+          <Button variant="outline" onClick={onOpen}>
             <PlusIcon className="mr-2 h-4 w-4" />
-            Transaction
+            Ne Expense
           </Button>
           <Button onClick={handleExport}>
             <DownloadIcon className="mr-2 h-4 w-4" />
@@ -296,7 +282,7 @@ const TransactionTable = () => {
               ))}
             </TableHeader>
             <TableBody>
-              {table.getRowModel().rows?.length ? (
+              {table.getRowModel().rows.length ? (
                 table.getRowModel().rows.map((row) => (
                   <TableRow
                     className="hover:bg-gray-50 dark:hover:bg-gray-800 whitespace-nowrap"
@@ -318,7 +304,7 @@ const TransactionTable = () => {
                     colSpan={columns.length}
                     className="h-24 text-center"
                   >
-                    No transactions found.
+                    No expenses found.
                   </TableCell>
                 </TableRow>
               )}
@@ -327,10 +313,10 @@ const TransactionTable = () => {
         </div>
       </CardContent>
       <CardFooter className="px-0">
-        <TransactionPagination
+        <ExpensesPagination
           currentPage={pagination.pageIndex + 1}
           totalPages={Math.ceil(
-            (transactionsData?.length || 0) / pagination.pageSize
+            (expensesData?.length || 0) / pagination.pageSize
           )}
           onPageChange={(page) => table.setPageIndex(page - 1)}
         />
@@ -359,4 +345,4 @@ const TransactionTable = () => {
   );
 };
 
-export default TransactionTable;
+export default ExpensesTable;

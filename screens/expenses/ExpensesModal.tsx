@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, firestore } from "@/lib/firebase/config";
 import { doc, setDoc, Timestamp } from "firebase/firestore";
-
 import {
   Dialog,
   DialogContent,
@@ -34,7 +33,6 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
-import { useTransactionModal } from "@/lib/zustand/use-transaction";
 import {
   Popover,
   PopoverContent,
@@ -44,91 +42,82 @@ import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Transaction } from "@/types/Transactions";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { useExpenseModal } from "@/lib/zustand/use-expense";
 
-
-const transactionSchema = z.object({
+const expenseSchema = z.object({
   amount: z.coerce.number().min(1, "Amount must be at least 1"),
-  receiverName: z.string().min(1, "Receiver name is required"),
-  receiver: z.string().min(1, "Receiver is required").email("Invalid email"),
-  paymentMode: z.string().min(1, "Payment method is required"),
-  date: z.date(),
+  expenditureType: z.string().min(1, "Expenditure type is required"),
+  paymentMethod: z.string().min(1, "Payment method is required"),
+  dateSpent: z.date(),
   note: z.string().optional(),
-  status: z.enum(["pending", "success", "failed"]),
 });
+type ExpenseFormValues = z.infer<typeof expenseSchema>;
 
-type TransactionFormValues = z.infer<typeof transactionSchema>;
-
-const TransactionModal = () => {
+const ExpenseModal = () => {
   const [user] = useAuthState(auth);
-  const { open, currentTransaction, onClose } = useTransactionModal();
+  const { open, currentExpense, onClose } = useExpenseModal();
   const [loading, setLoading] = useState(false);
 
-  const form = useForm<TransactionFormValues>({
-    resolver: zodResolver(transactionSchema),
+  const form = useForm<ExpenseFormValues>({
+    resolver: zodResolver(expenseSchema),
     defaultValues: {
       amount: 0,
-      receiverName: "",
-      receiver: "",
-      paymentMode: "",
-      date: new Date(),
+      expenditureType: "",
+      paymentMethod: "",
+      dateSpent: new Date(),
       note: "",
-      status: "pending",
     },
   });
 
   useEffect(() => {
-    if (currentTransaction) {
+    if (currentExpense) {
       form.reset({
-        ...currentTransaction,
-        date:
-          currentTransaction.date instanceof Timestamp
-            ? currentTransaction.date.toDate()
-            : currentTransaction.date,
+        ...currentExpense,
+        dateSpent:
+          currentExpense.dateSpent instanceof Timestamp
+            ? currentExpense.dateSpent.toDate()
+            : currentExpense.dateSpent,
       });
     } else {
       form.reset({
         amount: 0,
-        receiverName: "",
-        receiver: "",
-        paymentMode: "",
-        date: new Date(),
+        expenditureType: "",
+        paymentMethod: "",
+        dateSpent: new Date(),
         note: "",
-        status: "pending",
       });
     }
-  }, [currentTransaction, form]);
+  }, [currentExpense, form]);
 
-  const onSubmit = async (data: TransactionFormValues) => {
+  const onSubmit = async (data: ExpenseFormValues) => {
     if (!user) {
       toast.error("Authentication required");
       return;
     }
     setLoading(true);
-    const transactionData: Transaction = {
-      id: currentTransaction?.id || uuidv4(),
+
+    const expenseData = {
+      id: currentExpense?.id || uuidv4(),
       referenceNumber: uuidv4(),
       userId: user.uid,
       createdAt: Timestamp.now(),
       ...data,
-      date: Timestamp.fromDate(data.date),
+      dateSpent: Timestamp.fromDate(data.dateSpent),
     };
 
     try {
-      await setDoc(
-        doc(firestore, "transactions", transactionData.id),
-        transactionData,
-        { merge: true }
-      );
+      await setDoc(doc(firestore, "expenses", expenseData.id), expenseData, {
+        merge: true,
+      });
       toast.success(
-        `Transaction ${currentTransaction ? "updated" : "created"} successfully`
+        `Expense ${currentExpense ? "updated" : "added"} successfully`
       );
-      await form.reset();
+      form.reset();
       onClose();
     } catch (error) {
-      console.error("Error saving transaction:", error);
-      toast.error("Transaction failed");
+      console.error("Error saving expense:", error);
+      toast.error("Failed to save expense");
     } finally {
       setLoading(false);
     }
@@ -136,7 +125,7 @@ const TransactionModal = () => {
 
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
-      const currentDate = form.getValues("date") || new Date();
+      const currentDate = form.getValues("dateSpent") || new Date();
       const newDate = new Date(
         date.getFullYear(),
         date.getMonth(),
@@ -144,12 +133,15 @@ const TransactionModal = () => {
         currentDate.getHours(),
         currentDate.getMinutes()
       );
-      form.setValue("date", newDate);
+      form.setValue("dateSpent", newDate);
     }
   };
 
-  const handleTimeChange = (type: "hour" | "minute" | "ampm", value: string) => {
-    const currentDate = form.getValues("date") || new Date();
+  const handleTimeChange = (
+    type: "hour" | "minute" | "ampm",
+    value: string
+  ) => {
+    const currentDate = form.getValues("dateSpent") || new Date();
     const newDate = new Date(currentDate);
 
     if (type === "hour") {
@@ -166,17 +158,15 @@ const TransactionModal = () => {
       }
     }
 
-    form.setValue("date", newDate);
+    form.setValue("dateSpent", newDate);
   };
-
-
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>
-            {currentTransaction ? "Edit Transaction" : "New Money Transfer"}
+            {currentExpense ? "Edit Expense" : "Add New Expense"}
           </DialogTitle>
         </DialogHeader>
 
@@ -187,7 +177,7 @@ const TransactionModal = () => {
               name="amount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Amount</FormLabel>
+                  <FormLabel>Amount (KES)</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
@@ -200,71 +190,66 @@ const TransactionModal = () => {
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="receiverName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Receiver Name</FormLabel>
-                  <FormControl>
-                    <Input type="text" placeholder="Receiver Name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="receiver"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Receiver Email</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="email"
-                      placeholder="receiver@example.com"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="paymentMode"
+                name="expenditureType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Payment Method</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value || undefined}
-                    >
+                    <FormLabel>Expenditure Type</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select method" />
+                          <SelectValue placeholder="Select type" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="bank-transfer">
-                          Bank Transfer
+                        <SelectItem value="Food">Food</SelectItem>
+                        <SelectItem value="Travel">Travel</SelectItem>
+                        <SelectItem value="Office Supplies">
+                          Office Supplies
                         </SelectItem>
-                        <SelectItem value="mobile-money">
-                          Mobile Money
-                        </SelectItem>
-                        <SelectItem value="credit-card">Credit Card</SelectItem>
+                        <SelectItem value="Utilities">Utilities</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-                  <FormField
+
+              <FormField
+                control={form.control}
+                name="paymentMethod"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Payment Method</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select method" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Credit Card">Credit Card</SelectItem>
+                        <SelectItem value="Mobile Money">
+                          Mobile Money
+                        </SelectItem>
+                        <SelectItem value="Bank Transfer">
+                          Bank Transfer
+                        </SelectItem>
+                        <SelectItem value="Cash">Cash</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
               control={form.control}
-              name="date"
+              name="dateSpent"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Date & Time</FormLabel>
@@ -371,9 +356,7 @@ const TransactionModal = () => {
                                       : "ghost"
                                   }
                                   className="sm:w-full shrink-0 aspect-square"
-                                  onClick={() =>
-                                    handleTimeChange("ampm", ampm)
-                                  }
+                                  onClick={() => handleTimeChange("ampm", ampm)}
                                 >
                                   {ampm}
                                 </Button>
@@ -389,42 +372,15 @@ const TransactionModal = () => {
               )}
             />
 
-            </div>
-            <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Status</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value}
-                    disabled={loading}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select transaction status" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="success">Success</SelectItem>
-                      <SelectItem value="failed">Failed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             <FormField
               control={form.control}
               name="note"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Note</FormLabel>
+                  <FormLabel>Notes</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Add transaction details..."
+                      placeholder="Add expense details..."
                       className="resize-none"
                       {...field}
                     />
@@ -444,7 +400,7 @@ const TransactionModal = () => {
                 Cancel
               </Button>
               <Button disabled={loading} type="submit">
-                {loading ? "Saving..." : "Save Transaction"}
+                {loading ? "Saving..." : "Save Expense"}
               </Button>
             </div>
           </form>
@@ -454,4 +410,4 @@ const TransactionModal = () => {
   );
 };
 
-export default TransactionModal;
+export default ExpenseModal;

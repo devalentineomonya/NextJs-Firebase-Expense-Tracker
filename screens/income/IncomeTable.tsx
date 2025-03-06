@@ -34,9 +34,8 @@ import {
   ColumnDef,
   flexRender,
 } from "@tanstack/react-table";
-import TransactionPagination from "./TransactionPagination";
-import { Badge, BadgeProps } from "@/components/ui/badge";
-import { useTransactionModal } from "@/lib/zustand/use-transaction";
+import { Badge } from "@/components/ui/badge";
+import { useIncomeModal } from "@/lib/zustand/use-income";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -68,9 +67,10 @@ import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useMemo, useCallback } from "react";
 import { toast } from "sonner";
-import { Transaction } from "@/types/Transactions";
+import { Income } from "@/types/Income";
+import IncomePagination from "./IncomePagination";
 
-const TransactionTable = () => {
+const IncomeTable = () => {
   const [user] = useAuthState(auth);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
@@ -81,35 +81,35 @@ const TransactionTable = () => {
     pageSize: 10,
   });
 
-  const transactionsQuery = user
+  const incomesQuery = user
     ? query(
-        collection(firestore, "transactions"),
+        collection(firestore, "income"),
         where("userId", "==", user.uid),
-        orderBy("date", "desc")
+        orderBy("createdAt", "desc")
       )
     : null;
 
-  const [transactions, loading, error] = useCollection(transactionsQuery);
+  const [incomes, loading, error] = useCollection(incomesQuery);
 
-  const { onOpen, onEdit } = useTransactionModal();
+  const { onOpen, onEdit } = useIncomeModal();
 
-  const transactionsData = useMemo(
+  const incomesData = useMemo(
     () =>
-      transactions?.docs.map(
+      incomes?.docs.map(
         (doc) =>
           ({
             id: doc.id,
             ...doc.data(),
-          } as Transaction)
+          } as Income)
       ) || [],
-    [transactions]
+    [incomes]
   );
 
   const handleEdit = useCallback(
-    (transaction: Transaction) => {
+    (income: Income) => {
       onEdit({
-        ...transaction,
-        date: transaction.date,
+        ...income,
+        createdAt: income.createdAt,
       });
     },
     [onEdit]
@@ -124,58 +124,49 @@ const TransactionTable = () => {
     if (!deletingId || !user) return;
 
     try {
-      await deleteDoc(doc(firestore, "transactions", deletingId));
-      toast.success("Transaction deleted successfully");
+      await deleteDoc(doc(firestore, "income", deletingId));
+      toast.success("Income deleted successfully");
     } catch (error) {
-      console.error("Error deleting transaction:", error);
-      toast.error("Failed to delete transaction");
+      console.error("Error deleting income:", error);
+      toast.error("Failed to delete income");
     } finally {
       setDeleteDialogOpen(false);
       setDeletingId(null);
     }
   };
 
-  const columns: ColumnDef<Transaction>[] = [
+  const columns: ColumnDef<Income>[] = [
+    {
+      accessorKey: "source",
+      header: "Source",
+    },
     {
       accessorKey: "amount",
       header: "Amount",
       cell: ({ row }) => `KES ${row.original.amount.toFixed(2)}`,
     },
     {
-      accessorKey: "receiverName",
-      header: "Receiver Name",
+      accessorKey: "period",
+      header: "Period",
+      cell: ({ row }) => <Badge variant="outline">{row.original.period}</Badge>,
     },
     {
-      accessorKey: "receiver",
-      header: "Receiver Email",
+      accessorKey: "schedule",
+      header: "Schedule",
+      cell: ({ row }) => (
+        <Badge variant="outline">{row.original.schedule}</Badge>
+      ),
     },
     {
-      accessorKey: "paymentMode",
-      header: "Payment Method",
-    },
-    {
-      accessorKey: "date",
-      header: "Paid On",
-      cell: ({ row }) => format(row.original.date.toDate(), "PPPPpppp"),
-    },
-    {
-      accessorKey: "status",
-      header: "Status",
-      cell: ({ row }) => {
-        const status = row.original.status;
-        const variantMap: Record<string, BadgeProps["variant"]> = {
-          success: "success",
-          pending: "secondary",
-          failed: "destructive",
-        };
-        return <Badge variant={variantMap[status]}>{status}</Badge>;
-      },
+      accessorKey: "createdAt",
+      header: "Last Updated",
+      cell: ({ row }) => format(row.original.createdAt.toDate(), "PPPPpppp"),
     },
     {
       id: "actions",
       header: "Actions",
       cell: ({ row }) => {
-        const transaction = row.original;
+        const income = row.original;
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -184,12 +175,12 @@ const TransactionTable = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleEdit(transaction)}>
+              <DropdownMenuItem onClick={() => handleEdit(income)}>
                 <Pencil className="mr-2 h-4 w-4" />
                 Edit
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => handleDeleteClick(transaction.id)}
+                onClick={() => handleDeleteClick(income.id)}
                 className="text-destructive"
               >
                 <Trash className="mr-2 h-4 w-4" />
@@ -203,7 +194,7 @@ const TransactionTable = () => {
   ];
 
   const table = useReactTable({
-    data: transactionsData || [],
+    data: incomesData,
     columns,
     state: {
       sorting,
@@ -219,18 +210,15 @@ const TransactionTable = () => {
   });
 
   const handleExport = () => {
-    const exportData = (transactionsData || []).map(
-      (transaction: Transaction) => ({
-        Amount: transaction.amount,
-        "Receiver Name": transaction.receiverName,
-        "Receiver Email": transaction.receiver,
-        "Payment Method": transaction.paymentMode,
-        Date: format(transaction.date.toDate(), "PPPPpppp"),
-        Status: transaction.status,
-      })
-    );
+    const exportData = incomesData.map((income) => ({
+      Source: income.source,
+      Amount: income.amount,
+      Period: income.period,
+      Schedule: income.schedule,
+      "Last Updated": format(income.createdAt.toDate(), "PPPPpppp"),
+    }));
 
-    exportToCSV(exportData, "transactions");
+    exportToCSV(exportData, "incomes");
   };
 
   if (loading) {
@@ -245,7 +233,7 @@ const TransactionTable = () => {
   if (error) {
     return (
       <div className="max-w-md text-xs font-light text-red-500">
-        Error loading transactions: {error.message}
+        Error loading incomes: {error.message}
       </div>
     );
   }
@@ -254,12 +242,12 @@ const TransactionTable = () => {
     <Card className="shadow-none rounded-md border-none px-0">
       <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 px-0">
         <div className="space-y-2">
-          <CardTitle>All Transactions</CardTitle>
+          <CardTitle>Income Sources</CardTitle>
           <div className="flex items-center gap-4">
             <div className="relative">
               <SearchIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search reference..."
+                placeholder="Search sources..."
                 className="pl-8"
                 value={globalFilter}
                 onChange={(e) => setGlobalFilter(e.target.value)}
@@ -270,11 +258,11 @@ const TransactionTable = () => {
         <div className="flex items-center flex-col gap-2">
           <Button onClick={onOpen} variant="outline">
             <PlusIcon className="mr-2 h-4 w-4" />
-            Transaction
+            Add Income
           </Button>
           <Button onClick={handleExport}>
             <DownloadIcon className="mr-2 h-4 w-4" />
-            Report CSV
+            Export CSV
           </Button>
         </div>
       </CardHeader>
@@ -318,7 +306,7 @@ const TransactionTable = () => {
                     colSpan={columns.length}
                     className="h-24 text-center"
                   >
-                    No transactions found.
+                    No income sources found.
                   </TableCell>
                 </TableRow>
               )}
@@ -327,10 +315,10 @@ const TransactionTable = () => {
         </div>
       </CardContent>
       <CardFooter className="px-0">
-        <TransactionPagination
+        <IncomePagination
           currentPage={pagination.pageIndex + 1}
           totalPages={Math.ceil(
-            (transactionsData?.length || 0) / pagination.pageSize
+            (incomesData?.length || 0) / pagination.pageSize
           )}
           onPageChange={(page) => table.setPageIndex(page - 1)}
         />
@@ -340,7 +328,7 @@ const TransactionTable = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this transaction? This action
+              Are you sure you want to delete this income source? This action
               cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -359,4 +347,4 @@ const TransactionTable = () => {
   );
 };
 
-export default TransactionTable;
+export default IncomeTable;
