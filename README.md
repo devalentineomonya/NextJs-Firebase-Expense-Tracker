@@ -37,7 +37,7 @@ A modern expense tracking web application built with Next.js and Firebase, desig
 
 ## Tech Stack 🛠️
 
-- **Frontend**: 
+- **Frontend**:
   - Next.js 14 (App Router)
   - React 18
   - Tailwind CSS + Shadcn UI Components
@@ -66,6 +66,7 @@ cd NextJs-Firebase-Expense-Tracker
 2. Install dependencies
 ```bash
 npm install
+
 ```
 
 3. Set up Firebase configuration
@@ -81,7 +82,12 @@ NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
 ...
 ```
 
-5. Run the development server
+5. Deploy the firestore rules
+```bash
+firebase deploy --only firestore:rules
+```
+
+6. Run the development server
 ```bash
 npm run dev
 ```
