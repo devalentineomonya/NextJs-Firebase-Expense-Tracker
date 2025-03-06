@@ -22,3 +22,5 @@ export const exportToCSV = <T extends Record<string, unknown>>(data: T[], fileNa
     link.click();
     document.body.removeChild(link);
   };
+
+
