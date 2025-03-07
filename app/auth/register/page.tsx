@@ -18,7 +18,8 @@ import {
   useSendEmailVerification,
   useCreateUserWithEmailAndPassword,
 } from "react-firebase-hooks/auth";
-import { auth } from "@/lib/firebase/config";
+import { auth, firestore } from "@/lib/firebase/config";
+import { doc, setDoc } from "firebase/firestore";
 
 const registrationSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -31,7 +32,7 @@ const registrationSchema = z.object({
 
 type RegistrationFormValues = z.infer<typeof registrationSchema>;
 
-const FormSection = () => {
+const RegisterForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [createUserWithEmailPassword] = useCreateUserWithEmailAndPassword(auth);
   const [sendEmailVerification] = useSendEmailVerification(auth);
@@ -53,23 +54,23 @@ const FormSection = () => {
         data.email,
         data.password
       );
-
-      if (userData) {
-        const success = await sendEmailVerification();
-
-        if (success) {
-          toast.success("Verification email sent! Please check your inbox.");
-          router.push("/auth/verify");
-        } else {
-          throw new Error("Failed to send verification email");
-        }
+      console.log("Current User:", userData?.user?.uid);
+      console.log("Current User:", userData);
+      if (userData?.user) {
+        await sendEmailVerification();
+        await setDoc(doc(firestore, "users", userData.user.uid), {
+          userId: userData.user.uid,
+          name: data.name,
+          email: data.email,
+          isProfileComplete: false,
+        });
+        toast.success("Verification email sent! Please check your inbox.");
+        router.push("/auth/verify");
       }
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        toast.error(error.message);
-      } else {
-        toast.error("An unknown error occurred");
-      }
+    } catch (error) {
+      console.log(error);
+
+      toast.error(error instanceof Error ? error.message : "An error occurred");
     } finally {
       setIsLoading(false);
     }
@@ -143,11 +144,7 @@ const FormSection = () => {
           </p>
         )}
 
-        <Button
-          type="submit"
-          disabled={isLoading}
-          className="w-full bg-primary dark:bg-slate-950 dark:hover:bg-slate-900 text-white rounded-md py-2 hover:bg-primary-dark"
-        >
+        <Button type="submit" disabled={isLoading} className="w-full">
           {isLoading ? "Registering..." : "Register"}
         </Button>
       </form>
@@ -168,17 +165,14 @@ const CheckboxLinkGroup = ({
         id="terms"
         checked={checked}
         onCheckedChange={(checked) => onChange(!!checked)}
-        className="rounded border border-border dark:border-gray-500 cursor-pointer text-primary"
       />
-      <Label
-        htmlFor="terms"
-        className="text-sm text-gray-900 dark:text-white opacity-90"
-      >
+      <Label htmlFor="terms" className="text-sm">
         I accept the terms and conditions
       </Label>
     </div>
   </div>
 );
+
 const SignupLink = () => (
   <div className="flex gap-2 text-base font-medium mt-6 justify-center">
     <p>Already have an account?</p>
@@ -188,18 +182,14 @@ const SignupLink = () => (
   </div>
 );
 
-export default function Login() {
+export default function Register() {
   return (
-    <div className="min-h-screen bg-[#5d87ff20] dark:bg-darkprimary flex items-center justify-center p-4 w-full">
-      <div className="w-full max-w-[450px] bg-white dark:bg-[#202936] shadow-[rgba(145,_158,_171,_0.3)_0px_0px_2px_0px,_rgba(145,_158,_171,_0.02)_0px_12px_24px_-4px]   rounded-md p-6">
+    <div className="min-h-screen flex items-center justify-center p-4 w-full">
+      <div className="w-full max-w-[450px] bg-white shadow-md rounded-md p-6">
         <Logo />
         <SocialLoginSection />
-        <div className="flex items-center gap-4">
-          <Separator className="flex-1 dark:bg-gray-500" />
-          <span className="text-muted-foreground">or sign up with</span>
-          <Separator className="flex-1 dark:bg-gray-500" />
-        </div>
-        <FormSection />
+        <Separator />
+        <RegisterForm />
         <SignupLink />
       </div>
     </div>

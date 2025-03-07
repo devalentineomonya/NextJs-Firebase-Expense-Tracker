@@ -17,7 +17,7 @@ import { auth } from "@/lib/firebase/config";
 import { useRouter } from "next/navigation";
 import { use } from "react";
 import { reload } from "firebase/auth";
-
+import useAuthStore from "@/lib/zustand/use-authenticating";
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 const loginSchema = z.object({
@@ -32,6 +32,7 @@ const FormSection = (props: { redirectUrl: string }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [signInWithEmailPassword] = useSignInWithEmailAndPassword(auth);
+  const { isAuthenticating, setAuthState } = useAuthStore();
   const router = useRouter();
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -44,6 +45,7 @@ const FormSection = (props: { redirectUrl: string }) => {
 
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
+    setAuthState(true);
     try {
       const userData = await signInWithEmailPassword(data.email, data.password);
       if (userData) {
@@ -59,6 +61,7 @@ const FormSection = (props: { redirectUrl: string }) => {
 
         toast.success("Login successful... redirecting to dashboard");
         setIsRedirecting(true);
+
         console.log(props.redirectUrl);
         return router.push(props.redirectUrl);
       } else {
@@ -74,6 +77,7 @@ const FormSection = (props: { redirectUrl: string }) => {
       }
     } finally {
       setIsLoading(false);
+      setAuthState(false);
     }
   };
 
@@ -101,6 +105,7 @@ const FormSection = (props: { redirectUrl: string }) => {
           render={({ field, fieldState }) => (
             <div>
               <InputField
+              
                 label="Password"
                 id="password"
                 type="password"
@@ -127,7 +132,7 @@ const FormSection = (props: { redirectUrl: string }) => {
 
         <Button
           type="submit"
-          disabled={isLoading || isRedirecting}
+          disabled={isLoading || isRedirecting || isAuthenticating}
           className="w-full bg-primary dark:bg-slate-950 dark:hover:bg-slate-900 text-white rounded-md py-2 hover:bg-primary-dark"
         >
           {isLoading
@@ -160,7 +165,7 @@ export default function Login(props: { searchParams: SearchParams }) {
     <div className="min-h-screen bg-[#5d87ff20] dark:bg-darkprimary flex items-center justify-center p-4 w-full">
       <div className="w-full max-w-[450px] bg-white dark:bg-[#202936] shadow-[rgba(145,_158,_171,_0.3)_0px_0px_2px_0px,_rgba(145,_158,_171,_0.02)_0px_12px_24px_-4px]   rounded-md p-6">
         <Logo />
-        <SocialLoginSection />
+        <SocialLoginSection searchParams={searchParams} />
         <div className="flex items-center gap-4">
           <Separator className="flex-1 dark:bg-gray-500" />
           <span className="text-muted-foreground">or sign in with</span>
