@@ -29,6 +29,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
+    "cookie": "^1.0.2",
     "country-flag-icons": "^1.5.13",
     "date-fns": "^4.1.0",
     "firebase": "^11.4.0",
