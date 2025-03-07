@@ -13,6 +13,8 @@ export async function middleware(request: NextRequest) {
   const session = request.cookies.get("session")?.value;
   let isAuthenticated = false;
   let emailVerified = false;
+  let isProfileComplete = false;
+  const { pathname } = request.nextUrl;
 
   if (session) {
     try {
@@ -27,13 +29,17 @@ export async function middleware(request: NextRequest) {
         audience: FIREBASE_PROJECT_ID,
       });
 
-      // Always set these values from the token
       isAuthenticated = true;
       emailVerified = payload.email_verified === true;
+      isProfileComplete = payload.isProfileComplete === true;
 
-      // Check if email was verified within the last 2 minutes
       const currentTime = Date.now() / 1000;
-      if (!emailVerified && payload?.iat && payload.iat > currentTime - 120) {
+      if (
+        !emailVerified &&
+        payload?.iat &&
+        payload.iat > currentTime - 120 &&
+        pathname !== "/auth/verify"
+      ) {
         return NextResponse.redirect(
           new URL(`/auth/verify?freshLogin=true`, request.url)
         );
@@ -44,20 +50,23 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  const { pathname } = request.nextUrl;
-
   if (isAuthenticated) {
-    // Handle unverified users
+    // First check email verification status
     if (!emailVerified) {
       if (pathname !== "/auth/verify") {
         return NextResponse.redirect(new URL("/auth/verify", request.url));
       }
     } else {
-      // Handle verified users trying to access verification page
+      // If email is verified, redirect away from /auth/verify
       if (pathname === "/auth/verify") {
         return NextResponse.redirect(
           new URL(DEFAULT_LOGIN_REDIRECT, request.url)
         );
+      }
+
+      // Then check profile completion status
+      if (!isProfileComplete && pathname !== "/profile") {
+        return NextResponse.redirect(new URL("/profile", request.url));
       }
     }
 
@@ -69,7 +78,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL(redirectUrl, request.url));
     }
   } else {
-    // Redirect non-authenticated users from protected routes
+    // Handle unauthenticated users
     if (!PUBLIC_ROUTES.includes(pathname)) {
       let callbackUrl = pathname;
       if (request.nextUrl.search) {
@@ -84,6 +93,7 @@ export async function middleware(request: NextRequest) {
 
   return NextResponse.next();
 }
+
 export const config = {
   matcher: [
     "/((?!api|_next/static|_next/image|favicon.ico|google.svg|github.svg|logo.png|sitemap.xml|robots.txt).*)",
