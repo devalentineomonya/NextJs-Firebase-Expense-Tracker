@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -16,6 +17,12 @@ import { Card } from "@/components/ui/card";
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { FormField } from "@/components/ui/form";
 import { FormProvider } from "react-hook-form";
+import { auth, firestore } from "@/lib/firebase/config";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -25,24 +32,87 @@ const formSchema = z.object({
   email: z.string().email("Invalid email format"),
   phone: z.string().min(10, "Invalid phone number"),
   address: z.string().min(1, "Address is required"),
+  isProfileComplete: z.boolean().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
 
 const PersonalDetails = () => {
+  const [user, loading, error] = useAuthState(auth);
+  const [loadingSave, setLoadingSave] = useState(false);
+  const router = useRouter();
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
   });
 
-  const onSubmit = (data: FormData) => {
-    console.log(data);
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      if (!user) return;
+      try {
+        const userDoc = await getDoc(doc(firestore, "users", user.uid));
+        if (userDoc.exists()) {
+          form.reset(userDoc.data() as FormData);
+        }
+      } catch (err) {
+        console.error("Error fetching user data:", err);
+      }
+    };
+
+    fetchUserDetails();
+  }, [user, form]);
+
+  const onSubmit = async (data: FormData) => {
+    if (!user) return;
+    setLoadingSave(true);
+    try {
+      const userRef = doc(firestore, "users", user.uid);
+      const userDoc = await getDoc(userRef);
+      const isFirstUpdate =
+        userDoc.exists() && !userDoc.data()?.isProfileComplete;
+
+      await updateDoc(userRef, {
+        ...data,
+        isProfileComplete: true,
+      });
+      const newIdToken = await auth.currentUser?.getIdToken(true);
+
+      await fetch("/api/update-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: newIdToken }),
+      });
+      
+      if (isFirstUpdate) {
+        toast.success("Profile completed! Redirecting to dashboard...");
+        router.push("/");
+      } else {
+        toast.success("Profile updated successfully!");
+      }
+    } catch (err) {
+      console.error("Error updating user data:", err);
+      toast.error("Failed to update profile. Try again.");
+    } finally {
+      setLoadingSave(false);
+    }
   };
 
+  if (loading) return <Skeleton className="h-full w-full min-h-40" />;
+
+  if (error) {
+    return (
+      <div className="max-w-md text-xs font-light text-red-500">
+        Error loading user data: {error.message}
+      </div>
+    );
+  }
+
   return (
-    <Card className="flex h-full flex-col justify-start shadow-[rgba(145,_158,_171,_0.3)_0px_0px_2px_0px,_rgba(145,_158,_171,_0.02)_0px_12px_24px_-4px] rounded-md bg-transparent mt-5">
+    <Card className="flex h-full flex-col justify-start shadow-md rounded-md bg-transparent">
       <CardHeader>
         <CardTitle>Personal Details</CardTitle>
-        <p className="text-sm text-gray-500">To change your personal details, edit and save from here.</p>
+        <p className="text-sm text-gray-500">
+          Update your personal details here.
+        </p>
       </CardHeader>
       <CardContent>
         <FormProvider {...form}>
@@ -59,7 +129,7 @@ const PersonalDetails = () => {
                       {...field}
                     />
                     {fieldState.error && (
-                      <span className="text-sm font-medium text-destructive mt-1">
+                      <span className="text-sm text-destructive">
                         {fieldState.error.message}
                       </span>
                     )}
@@ -78,7 +148,7 @@ const PersonalDetails = () => {
                       {...field}
                     />
                     {fieldState.error && (
-                      <span className="text-sm font-medium text-destructive mt-1">
+                      <span className="text-sm text-destructive">
                         {fieldState.error.message}
                       </span>
                     )}
@@ -90,9 +160,7 @@ const PersonalDetails = () => {
                 name="location"
                 render={({ field, fieldState }) => (
                   <div>
-                    <Label className="text-sm font-semibold text-gray-900 dark:text-white">
-                      Location
-                    </Label>
+                    <Label>Location</Label>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select location" />
@@ -103,7 +171,7 @@ const PersonalDetails = () => {
                       </SelectContent>
                     </Select>
                     {fieldState.error && (
-                      <span className="text-sm font-medium text-destructive mt-1">
+                      <span className="text-sm text-destructive">
                         {fieldState.error.message}
                       </span>
                     )}
@@ -115,9 +183,7 @@ const PersonalDetails = () => {
                 name="currency"
                 render={({ field, fieldState }) => (
                   <div>
-                    <Label className="text-sm font-semibold text-gray-900 dark:text-white">
-                      Currency
-                    </Label>
+                    <Label>Currency</Label>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select currency" />
@@ -128,7 +194,7 @@ const PersonalDetails = () => {
                       </SelectContent>
                     </Select>
                     {fieldState.error && (
-                      <span className="text-sm font-medium text-destructive mt-1">
+                      <span className="text-sm text-destructive">
                         {fieldState.error.message}
                       </span>
                     )}
@@ -145,9 +211,10 @@ const PersonalDetails = () => {
                       id="email"
                       type="email"
                       {...field}
+                      disabled
                     />
                     {fieldState.error && (
-                      <span className="text-sm font-medium text-destructive mt-1">
+                      <span className="text-sm text-destructive">
                         {fieldState.error.message}
                       </span>
                     )}
@@ -166,7 +233,7 @@ const PersonalDetails = () => {
                       {...field}
                     />
                     {fieldState.error && (
-                      <span className="text-sm font-medium text-destructive mt-1">
+                      <span className="text-sm text-destructive">
                         {fieldState.error.message}
                       </span>
                     )}
@@ -178,16 +245,14 @@ const PersonalDetails = () => {
                 name="address"
                 render={({ field, fieldState }) => (
                   <div className="col-span-1 md:col-span-2">
-                    <Label className="text-sm font-semibold text-gray-900 dark:text-white">
-                      Address
-                    </Label>
+                    <Label>Address</Label>
                     <Textarea
                       className="mt-1"
                       {...field}
                       placeholder="Enter your full address"
                     />
                     {fieldState.error && (
-                      <span className="text-sm font-medium text-destructive mt-1">
+                      <span className="text-sm text-destructive">
                         {fieldState.error.message}
                       </span>
                     )}
@@ -200,7 +265,9 @@ const PersonalDetails = () => {
               <Button type="button" variant="outline">
                 Cancel
               </Button>
-              <Button type="submit">Save</Button>
+              <Button type="submit" disabled={loadingSave}>
+                {loadingSave ? "Saving..." : "Save"}
+              </Button>
             </div>
           </form>
         </FormProvider>
