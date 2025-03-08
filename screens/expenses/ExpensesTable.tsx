@@ -69,6 +69,7 @@ import { useCollection } from "react-firebase-hooks/firestore";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Expense } from "@/types/Expenses";
 import { toast } from "sonner";
+import ExportButton from "@/components/common/exportButton/ExportButton";
 
 const ExpensesTable = () => {
   const [user] = useAuthState(auth);
@@ -258,10 +259,7 @@ const ExpensesTable = () => {
             <PlusIcon className="mr-2 h-4 w-4" />
             Ne Expense
           </Button>
-          <Button onClick={handleExport}>
-            <DownloadIcon className="mr-2 h-4 w-4" />
-            Report CSV
-          </Button>
+          <ExportButton />
         </div>
       </CardHeader>
       <CardContent className="mt-6 px-0">
