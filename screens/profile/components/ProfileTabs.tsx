@@ -4,12 +4,26 @@ import { CircleUser, BellRing } from "lucide-react";
 import ProfileTab from "../widgets/ProfileTab";
 import NotificationTab from "../widgets/NotificationTab";
 import ProfileBanner from "./ProfileBanner";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { TriangleAlert } from "lucide-react";
+import useProfileComplete from "@/lib/zustand/use-profile-complete";
+
 const TAB_OVERRIDE_CLASS =
   "flex items-center gap-2 pb-2 text-sm rounded-none data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-blue-600 data-[state=active]:border-b-2 data-[state=active]:border-blue-600";
 
 const ProfileTabs = () => {
+  const { isProfileComplete } = useProfileComplete();
   return (
     <section className="relative">
+      {isProfileComplete ? (
+        <Alert variant="destructive" className="mb-3">
+          <TriangleAlert className="h-6 w-6 mr-2" />
+          <AlertTitle>Complete your profile</AlertTitle>
+          <AlertDescription>
+            Please complete your profile to continue.
+          </AlertDescription>
+     </Alert>
+      ) : null}
       <div>
         <ProfileBanner />
         <Tabs defaultValue="account" className="w-full">
@@ -27,7 +41,6 @@ const ProfileTabs = () => {
                   <BellRing className="w-6 h-6 sm:w-4 sm:h-4" />
                   <span className="hidden sm:block">Notifications</span>
                 </TabsTrigger>
-
               </TabsList>
             </div>
           </div>

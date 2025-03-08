@@ -19,10 +19,11 @@ import { FormField } from "@/components/ui/form";
 import { FormProvider } from "react-hook-form";
 import { auth, firestore } from "@/lib/firebase/config";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { useAuthState } from "react-firebase-hooks/auth";
+import { useAuthState, useUpdateProfile } from "react-firebase-hooks/auth";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -40,6 +41,7 @@ type FormData = z.infer<typeof formSchema>;
 const PersonalDetails = () => {
   const [user, loading, error] = useAuthState(auth);
   const [loadingSave, setLoadingSave] = useState(false);
+  const [updateProfile] = useUpdateProfile(auth);
   const router = useRouter();
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -60,7 +62,6 @@ const PersonalDetails = () => {
 
     fetchUserDetails();
   }, [user, form]);
-
   const onSubmit = async (data: FormData) => {
     if (!user) return;
     setLoadingSave(true);
@@ -70,21 +71,41 @@ const PersonalDetails = () => {
       const isFirstUpdate =
         userDoc.exists() && !userDoc.data()?.isProfileComplete;
 
-      await updateDoc(userRef, {
-        ...data,
-        isProfileComplete: true,
+      await Promise.all([
+        updateProfile({ displayName: data.name }),
+        updateDoc(userRef, {
+          ...data,
+          isProfileComplete: true,
+        }),
+      ]);
+
+      await auth.currentUser?.getIdToken(true);
+
+      const apiResponse = await fetch("/api/update-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: await auth.currentUser?.getIdToken() }),
       });
-      const newIdToken = await auth.currentUser?.getIdToken(true);
+
+      if (!apiResponse.ok) throw new Error("Session update failed");
+
+      await auth.currentUser?.getIdToken(true);
+      const finalToken = await auth.currentUser?.getIdToken();
 
       await fetch("/api/update-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: newIdToken }),
+        body: JSON.stringify({ token: finalToken }),
       });
-      
+
+      if (typeof window !== "undefined") {
+        await auth.currentUser?.reload();
+        await new Promise((resolve) => setTimeout(resolve, 300));
+      }
+
       if (isFirstUpdate) {
-        toast.success("Profile completed! Redirecting to dashboard...");
-        router.push("/");
+        toast.success("Profile completed! Redirecting...");
+        router.push(`/?t=${Date.now()}`);
       } else {
         toast.success("Profile updated successfully!");
       }
@@ -95,7 +116,6 @@ const PersonalDetails = () => {
       setLoadingSave(false);
     }
   };
-
   if (loading) return <Skeleton className="h-full w-full min-h-40" />;
 
   if (error) {
@@ -257,6 +277,13 @@ const PersonalDetails = () => {
                       </span>
                     )}
                   </div>
+                )}
+              />
+
+              <FormField
+                name="isProfileComplete"
+                render={({ field }) => (
+                  <Input className="hidden" disabled {...field} />
                 )}
               />
             </div>
