@@ -15,26 +15,29 @@ import {
 } from "firebase/auth";
 import { toast } from "sonner";
 
-const createPasswordSchema = (hasPassword: boolean) => {
-  const baseSchema = z.object({
-    newPassword: z
-      .string()
-      .min(8, "Password must be at least 8 characters")
-      .regex(/[A-Z]/, "Must contain at least one uppercase letter")
-      .regex(/[0-9]/, "Must contain at least one number"),
-    confirmPassword: z.string(),
-  });
+const passwordValidation = {
+  newPassword: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[A-Z]/, "Must contain at least one uppercase letter")
+    .regex(/[0-9]/, "Must contain at least one number"),
+  confirmPassword: z.string(),
+};
 
-  return (
-    hasPassword
-      ? baseSchema.extend({
-          currentPassword: z.string().min(6, "Current password is required"),
-        })
-      : baseSchema
-  ).refine((data) => data.newPassword === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"],
-  });
+const createPasswordSchema = (hasPassword: boolean) => {
+  const schema = z
+    .object({
+      ...passwordValidation,
+      ...(hasPassword && {
+        currentPassword: z.string().min(6, "Current password is required"),
+      }),
+    })
+    .refine((data) => data.newPassword === data.confirmPassword, {
+      message: "Passwords don't match",
+      path: ["confirmPassword"],
+    });
+
+  return schema;
 };
 
 type FormData = z.infer<ReturnType<typeof createPasswordSchema>>;
@@ -57,7 +60,7 @@ const ChangePassword = () => {
       if (hasPassword) {
         const credential = EmailAuthProvider.credential(
           user.email,
-          data.currentPassword
+          data.currentPassword as string
         );
         await reauthenticateWithCredential(user, credential);
       }
