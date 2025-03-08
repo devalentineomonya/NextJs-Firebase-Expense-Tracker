@@ -33,6 +33,7 @@
     "country-flag-icons": "^1.5.13",
     "date-fns": "^4.1.0",
     "firebase": "^11.4.0",
+    "firebase-admin": "^13.2.0",
     "input-otp": "^1.4.2",
     "jose": "^6.0.8",
     "lucide-react": "^0.454.0",
