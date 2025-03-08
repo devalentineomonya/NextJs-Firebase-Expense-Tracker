@@ -59,8 +59,7 @@ const columns: ColumnDef<Payment>[] = [
       <div className="flex items-center gap-x-3">
         <Avatar className="rounded-md" >
           <AvatarImage
-
-            src="/placeholder-image.jpg"
+            src="/avatar.png"
             alt="avatar"
           />
           <AvatarFallback className="rounded-md">AV</AvatarFallback>
