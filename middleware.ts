@@ -28,10 +28,10 @@ export async function middleware(request: NextRequest) {
         issuer: `https://securetoken.google.com/${FIREBASE_PROJECT_ID}`,
         audience: FIREBASE_PROJECT_ID,
       });
-
+      console.log({ payload });
       isAuthenticated = true;
       emailVerified = payload.email_verified === true;
-      isProfileComplete = payload.isProfileComplete === true;
+      isProfileComplete = payload.profileComplete === true;
 
       const currentTime = Date.now() / 1000;
       if (
@@ -96,6 +96,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|google.svg|github.svg|logo.png|sitemap.xml|robots.txt).*)",
+    "/((?!api/|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };
