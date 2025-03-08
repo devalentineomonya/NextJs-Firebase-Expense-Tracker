@@ -6,8 +6,7 @@ const GitHubLink = () => (
   <Link
     href="https://github.com/devalentineomonya"
     target="_blank"
-    legacyBehavior
-    passHref
+    rel="noopener noreferrer"
   >
     <Button
       size="icon"
