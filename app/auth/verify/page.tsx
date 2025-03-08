@@ -11,9 +11,11 @@ import { User, reload } from "firebase/auth";
 const LoadingScreen = () => {
   return (
     <div className="min-h-screen bg-[#5d87ff20] dark:bg-darkprimary flex items-center justify-center p-4 w-full">
-      <div className="w-full max-w-[450px] bg-white dark:bg-[#202936] rounded-md p-6
+      <div
+        className="w-full max-w-[450px] bg-white dark:bg-[#202936] rounded-md p-6
       shadow-[rgba(145,_158,_171,_0.3)_0px_0px_2px_0px,_rgba(145,_158,_171,_0.02)_0px_12px_24px_-4px]
-       flex flex-col items-center">
+       flex flex-col items-center"
+      >
         <Logo />
         <div className="mt-6 mb-4">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
@@ -51,7 +53,9 @@ export default function Verify() {
         await reload(user);
         if (user.emailVerified) {
           const newToken = await user.getIdToken(true);
-          toast.loading("Updating your session...", { id: "session-update" });
+          const toastId = toast.loading("Updating your session...", {
+            id: "session-update",
+          });
 
           await fetch("/api/update-session", {
             method: "POST",
@@ -60,6 +64,7 @@ export default function Verify() {
           });
 
           toast.success("Session updated! Redirecting...");
+          toast.dismiss(toastId);
           router.push("/");
         }
       } catch (error) {
@@ -75,30 +80,32 @@ export default function Verify() {
     if (!user) return;
 
     setIsChecking(true);
-    const toastId = toast.loading("Starting verification check...");
+    const verificationToastId = toast.loading("Starting verification check...");
 
     try {
-      // Step 1: Reload user data
-      toast.loading("Refreshing user status...", { id: toastId });
+      const refreshUserStatusToastId = toast.loading(
+        "Refreshing user status..."
+      );
       await reload(user);
 
-      // Step 2: Force token refresh
-      toast.loading("Generating new session token...", { id: toastId });
+      const generateNewTokenToastId = toast.loading(
+        "Generating new session token..."
+      );
       const newToken = await user.getIdToken(true);
 
-      // Step 3: Update session cookie
-      toast.loading("Updating session...", { id: toastId });
+      const updateSessionToastId = toast.loading("Updating session...");
       await fetch("/api/update-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token: newToken }),
       });
 
-      // Step 4: Final verification check
       if (user.emailVerified) {
-        toast.success("Verification confirmed! Redirecting...", {
-          id: toastId,
-        });
+        toast.success("Verification confirmed! Redirecting...");
+        toast.dismiss(verificationToastId);
+        toast.dismiss(refreshUserStatusToastId);
+        toast.dismiss(generateNewTokenToastId);
+        toast.dismiss(updateSessionToastId);
         router.push("/");
       } else {
         throw new Error("Email still not verified");
@@ -106,7 +113,8 @@ export default function Verify() {
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Verification check failed";
-      toast.error(message, { id: toastId });
+      toast.error(message);
+      toast.dismiss(verificationToastId);
     } finally {
       setIsChecking(false);
     }
@@ -115,17 +123,19 @@ export default function Verify() {
   const handleResend = async () => {
     if (!user) return;
 
-    const toastId = toast.loading("Sending verification email...");
+    const resendToastId = toast.loading("Sending verification email...");
     try {
       const success = await sendEmailVerification();
       if (success) {
-        toast.success("Verification email resent!", { id: toastId });
+        toast.success("Verification email resent!", { id: resendToastId });
       } else {
         throw new Error("Failed to resend email");
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Resend failed";
-      toast.error(message, { id: toastId });
+      toast.error(message, { id: resendToastId });
+    } finally {
+      toast.dismiss(resendToastId);
     }
   };
 

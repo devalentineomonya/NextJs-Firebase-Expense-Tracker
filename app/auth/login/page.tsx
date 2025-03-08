@@ -44,40 +44,63 @@ const FormSection = (props: { redirectUrl: string }) => {
   });
 
   const onSubmit = async (data: LoginFormValues) => {
-    setIsLoading(true);
-    setAuthState(true);
     try {
-      const userData = await signInWithEmailPassword(data.email, data.password);
-      if (userData) {
-        const user = userData.user;
-        await reload(user);
-        const newToken = await user.getIdToken(true);
+      setIsLoading(true);
+      setAuthState(true);
 
-        await fetch("/api/update-session", {
+      const userCredential = await signInWithEmailPassword(
+        data.email,
+        data.password
+      );
+      if (!userCredential?.user) {
+        toast.error("Invalid email or password");
+        return;
+      }
+
+      const user = auth.currentUser;
+      if (!user) throw new Error("User session not found");
+
+      await reload(user);
+      const newToken = await user.getIdToken(true);
+
+      const updateSession = async (token: string) => {
+        const response = await fetch("/api/update-session", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token: newToken }),
+          body: JSON.stringify({ token }),
         });
 
-        toast.success("Login successful... redirecting to dashboard");
-        setIsRedirecting(true);
+        if (!response.ok) throw new Error("Session update failed");
+        return response.json();
+      };
 
-        console.log(props.redirectUrl);
-        return router.push(props.redirectUrl);
-      } else {
-        toast.error("Invalid email or password");
+      const sessionData = await updateSession(newToken);
+      setIsRedirecting(true);
+      if (!sessionData?.isProfileComplete) {
+        toast.info("Please complete your profile to continue");
+        router.push("/profile");
+        return;
       }
+
+      toast.success("Login successful... redirecting");
+      router.push(props.redirectUrl);
     } catch (error: unknown) {
-      if (error instanceof Error) {
-        toast.error("Invalid email or password", {
-          description: error.message,
-        });
+      console.error("Login error:", error);
+
+      const errorMessage =
+        error instanceof Error ? error.message : "Authentication failed";
+
+      if (errorMessage.includes("auth/wrong-password")) {
+        toast.error("Incorrect password");
+      } else if (errorMessage.includes("auth/user-not-found")) {
+        toast.error("Account not found");
       } else {
-        toast.error("An unknown error occurred");
+        toast.error(errorMessage);
       }
     } finally {
       setIsLoading(false);
       setAuthState(false);
+      setIsRedirecting(false);
     }
   };
 
@@ -105,7 +128,6 @@ const FormSection = (props: { redirectUrl: string }) => {
           render={({ field, fieldState }) => (
             <div>
               <InputField
-              
                 label="Password"
                 id="password"
                 type="password"

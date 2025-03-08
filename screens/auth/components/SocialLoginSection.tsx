@@ -52,7 +52,7 @@ export const SocialLoginSection = ({
   searchParams?: SearchParams;
 }) => {
   const router = useRouter();
-  const redirectUrl = searchParams?.redirect || "/dashboard";
+  const redirectUrl = searchParams?.redirect || "/";
   const { isAuthenticating, setAuthState } = useAuthStore();
 
   const [signInWithGoogle, googleUser, googleLoading, googleError] =

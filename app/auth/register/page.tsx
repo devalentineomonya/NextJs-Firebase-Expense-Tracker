@@ -17,9 +17,13 @@ import { useRouter } from "next/navigation";
 import {
   useSendEmailVerification,
   useCreateUserWithEmailAndPassword,
+  useUpdateProfile,
 } from "react-firebase-hooks/auth";
 import { auth, firestore } from "@/lib/firebase/config";
 import { doc, setDoc } from "firebase/firestore";
+import useAuthStore from "@/lib/zustand/use-authenticating";
+import { FirebaseError } from "firebase/app";
+import useProfileComplete from "@/lib/zustand/use-profile-complete";
 
 const registrationSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -36,6 +40,9 @@ const RegisterForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [createUserWithEmailPassword] = useCreateUserWithEmailAndPassword(auth);
   const [sendEmailVerification] = useSendEmailVerification(auth);
+  const { setAuthState, isAuthenticating } = useAuthStore();
+  const { setIsProfileComplete } = useProfileComplete();
+  const [updateProfile] = useUpdateProfile(auth);
   const router = useRouter();
   const form = useForm<RegistrationFormValues>({
     resolver: zodResolver(registrationSchema),
@@ -49,6 +56,7 @@ const RegisterForm = () => {
 
   const onSubmit = async (data: RegistrationFormValues) => {
     setIsLoading(true);
+    setAuthState(true);
     try {
       const userData = await createUserWithEmailPassword(
         data.email,
@@ -57,22 +65,35 @@ const RegisterForm = () => {
       console.log("Current User:", userData?.user?.uid);
       console.log("Current User:", userData);
       if (userData?.user) {
-        await sendEmailVerification();
-        await setDoc(doc(firestore, "users", userData.user.uid), {
-          userId: userData.user.uid,
-          name: data.name,
-          email: data.email,
-          isProfileComplete: false,
-        });
+        await Promise.all([
+          sendEmailVerification(),
+          updateProfile({
+            displayName: data.name,
+          }),
+          setDoc(doc(firestore, "users", userData.user.uid), {
+            userId: userData.user.uid,
+            name: data.name,
+            email: data.email,
+            isProfileComplete: false,
+          }),
+        ]);
         toast.success("Verification email sent! Please check your inbox.");
+        setIsProfileComplete(false);
         router.push("/auth/verify");
       }
     } catch (error) {
       console.log(error);
 
-      toast.error(error instanceof Error ? error.message : "An error occurred");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : error instanceof FirebaseError
+          ? error.message
+          : "An error occurred"
+      );
     } finally {
       setIsLoading(false);
+      setAuthState(false);
     }
   };
 
@@ -144,7 +165,11 @@ const RegisterForm = () => {
           </p>
         )}
 
-        <Button type="submit" disabled={isLoading} className="w-full">
+        <Button
+          type="submit"
+          disabled={isLoading || isAuthenticating}
+          className="w-full"
+        >
           {isLoading ? "Registering..." : "Register"}
         </Button>
       </form>
