@@ -165,7 +165,7 @@ const TransactionTable = () => {
         const status = row.original.status;
         const variantMap: Record<string, BadgeProps["variant"]> = {
           success: "success",
-          pending: "secondary",
+          pending: "warning",
           failed: "destructive",
         };
         return <Badge variant={variantMap[status]}>{status}</Badge>;
