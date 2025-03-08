@@ -3,9 +3,9 @@ import HeroBanner from "@/screens/home/components/HeroBanner";
 import OtherCities from "@/screens/home/widgets/OtherCities";
 import MonthlyIncome from "@/screens/home/widgets/MonthlyIncome";
 import Pressure from "@/screens/home/widgets/Pressure";
-import SummaryTable from "@/screens/home/widgets/SummaryTable";
+import RecentTransactions from "@/screens/home/widgets/RecentTransactions";
 import Expenditure from "@/screens/home/widgets/Expenditure";
-import Trends from "@/screens/home/widgets/Trends";
+import ActivityLogs from "@/screens/home/widgets/ActivityLogs";
 import IncomeAndExpense from "@/screens/home/widgets/IncomeAndExpense";
 import Weekly from "@/screens/home/widgets/Weekly";
 import ExpenseSavingsRevenue from "@/screens/home/widgets/ExpenseSavingsRevenue";
@@ -21,8 +21,8 @@ export default function Home() {
       <Pressure />
       <Weekly />
       <OtherCities />
-      <Trends />
-      <SummaryTable />
+      <ActivityLogs />
+      <RecentTransactions />
     </main>
   );
 }
