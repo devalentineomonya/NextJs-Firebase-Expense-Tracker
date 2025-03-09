@@ -20,7 +20,7 @@ const ExpenseSavingsRevenue = () => {
       { browser: "chrome", visitors: 275, fill: "#5d87ff" },
       { browser: "safari", visitors: 200, fill: "#49beff" },
       { browser: "firefox", visitors: 187, fill: "#ffae1f" },
-      { browser: "edge", visitors: 173, fill: "#ffffff" },
+      { browser: "edge", visitors: 173, fill: "#f0f0f0" },
       { browser: "other", visitors: 90, fill: "#13deb9" },
     ];
   }, []);
@@ -43,7 +43,7 @@ const ExpenseSavingsRevenue = () => {
     },
     edge: {
       label: "Edge",
-      color: "#333",
+      color: "#f0f0f0",
     },
     other: {
       label: "Other",
@@ -112,7 +112,7 @@ const ExpenseSavingsRevenue = () => {
       <CardFooter className="flex justify-between items-center mt-4 h-full ">
         <div className="flex items-center">
           <div className="h-10 aspect-square rounded-md bg-[rgba(93,_135,_255,_0.1)] text-[#5d87ff] grid place-items-center">
-          <Grip className="w-6 h-6" />
+            <Grip className="w-6 h-6" />
           </div>
           <div className="ml-1">
             <h3 className="font-medium text-[#7c8fac]">$23,450</h3>
@@ -121,7 +121,7 @@ const ExpenseSavingsRevenue = () => {
         </div>
         <div className="flex items-center">
           <div className="h-10 aspect-square rounded-md bg-[#49beff1c] text-[#49beff] grid place-items-center">
-          <Grip className="w-6 h-6" />
+            <Grip className="w-6 h-6" />
           </div>
           <div className="ml-1">
             <h3 className="font-medium text-[#7c8fac]">$23,450</h3>
