@@ -1,6 +1,6 @@
 import CurrentPrecipitation from "@/screens/home/components/CurrentPrecipitation";
 import HeroBanner from "@/screens/home/components/HeroBanner";
-import OtherCities from "@/screens/home/widgets/OtherCities";
+import IncomeSources from "@/screens/home/widgets/IncomeSources";
 import MonthlyIncome from "@/screens/home/widgets/MonthlyIncome";
 import Pressure from "@/screens/home/widgets/Pressure";
 import RecentTransactions from "@/screens/home/widgets/RecentTransactions";
@@ -20,7 +20,7 @@ export default function Home() {
       <CurrentPrecipitation />
       <Pressure />
       <Weekly />
-      <OtherCities />
+      <IncomeSources />
       <ActivityLogs />
       <RecentTransactions />
     </main>
