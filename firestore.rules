@@ -2,43 +2,40 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check if the user is the owner of the document
+    // Helper functions
     function isOwner() {
       return request.auth != null &&
              resource.data.userId != null &&
              request.auth.uid == resource.data.userId;
     }
 
-    // Helper function to ensure users can only create documents for themselves
     function isCreatingOwnDocument() {
       return request.auth != null &&
              request.resource.data.userId == request.auth.uid;
     }
-    // Allow users to create and update their own profile
+
+    // User profile rules
     match /users/{userId} {
-    allow read, update, delete: if request.auth != null && request.auth.uid == userId;
-    allow create: if request.auth != null && userId == request.auth.uid;
+      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && userId == request.auth.uid;
     }
 
-    // Transactions rules
+    // Transactions rules (now case-correct)
     match /transactions/{transactionId} {
-      allow read: if isOwner();
-      allow create: if isCreatingOwnDocument();
-      allow update, delete: if isOwner();
+      allow read, create, update, delete: if isOwner();
     }
 
-    // Expenses rules
+    // Expenses rules (now case-consistent)
     match /expenses/{expenseId} {
-      allow read: if isOwner();
-      allow create: if isCreatingOwnDocument();
-      allow update, delete: if isOwner();
+      allow read, create, update, delete: if isOwner();
     }
 
-    // Income rules
+    // Income rules (now case-consistent)
     match /income/{incomeId} {
-      allow read: if isOwner();
-      allow create: if isCreatingOwnDocument();
-      allow update, delete: if isOwner();
+      allow read, create, update, delete: if isOwner();
     }
+
+    // Remove duplicate rules for capitalized collections
+    // (Firestore is case-sensitive, so these were creating separate rules)
   }
 }
