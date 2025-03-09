@@ -25,10 +25,12 @@ service cloud.firestore {
       allow read, create, update, delete: if isOwner();
     }
 
-    // Expenses rules (now case-consistent)
-    match /expenses/{expenseId} {
-      allow read, create, update, delete: if isOwner();
+     match /expenses/{expenseId} {
+      allow read: if isOwner();
+      allow create: if isValidNewDocument();
+      allow update, delete: if isOwner();
     }
+
 
     // Income rules (now case-consistent)
     match /income/{incomeId} {
