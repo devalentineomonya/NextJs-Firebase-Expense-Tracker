@@ -4,7 +4,7 @@ export type Expense = {
   id: string;
   amount: number;
   createdAt: Timestamp;
-  dateSpent: Timestamp;
+  dateSpent: Date;
   expenditureType: string;
   note?: string;
   paymentMethod: string;
