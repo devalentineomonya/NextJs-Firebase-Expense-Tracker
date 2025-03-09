@@ -5,6 +5,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import AuthProvider from "@/providers/auth-provider";
+import ProgressProvider from "@/providers/progress-provider";
 
 export const metadata: Metadata = {
   title: "DeExpenser | Tracker Expenses",
@@ -23,18 +24,20 @@ export default function RootLayout({
       <body
         className={` ${plusJakartaSans.className} antialiased  bg-white dark:bg-gray-800`}
       >
-        <AuthProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <Navbar />
-            <main className="flex justify-center w-full ">{children}</main>
-            <Toaster />
-          </ThemeProvider>
-        </AuthProvider>
+        <ProgressProvider>
+          <AuthProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              <Navbar />
+              <main className="flex justify-center w-full ">{children}</main>
+              <Toaster />
+            </ThemeProvider>
+          </AuthProvider>
+        </ProgressProvider>
       </body>
     </html>
   );
