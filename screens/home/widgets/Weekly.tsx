@@ -6,7 +6,7 @@ import {
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 import { ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Grip } from "lucide-react";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -84,16 +84,15 @@ const MonthlyExpenditure = () => {
   // Calculate month range
   const monthStart = startOfMonth(new Date(selectedYear, selectedMonth));
   const monthEnd = endOfMonth(new Date(selectedYear, selectedMonth));
-
   const expensesQuery = user
-    ? query(
-        collection(firestore, "expenses"),
-        where("userId", "==", user.uid),
-        where("dateSpent", ">=", Timestamp.fromDate(monthStart)),
-        where("dateSpent", "<=", Timestamp.fromDate(monthEnd)),
-        orderBy("dateSpent", "asc")
-      )
-    : null;
+  ? query(
+      collection(firestore, "expenses"),
+      where("userId", "==", user.uid),
+      where("dateSpent", ">=", Timestamp.fromDate(monthStart)),
+      where("dateSpent", "<=", Timestamp.fromDate(monthEnd)),
+      orderBy("dateSpent", "asc")
+    )
+  : null;
 
   const [expensesSnapshot, loading, error] = useCollection(expensesQuery);
 
@@ -199,7 +198,7 @@ const MonthlyExpenditure = () => {
         {loading ? (
           <Skeleton className="h-full w-full" />
         ) : chartData.length > 0 ? (
-            <BarChart
+          <BarChart
             barSize={24}
             accessibilityLayer
             data={chartData}
@@ -217,19 +216,10 @@ const MonthlyExpenditure = () => {
               className="-ml-4"
               axisLine={false}
               tickLine={false}
-              domain={[0, "auto"]} 
+              domain={[0, "auto"]}
             />
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent />}
-            />
-            <Bar
-              dataKey="total"
-              radius={6}
-              fill={({ index }) =>
-                categoryColors[index % categoryColors.length].barColor
-              }
-            />
+            <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+            <Bar dataKey="total" radius={6} fill={"#539bff"} />
           </BarChart>
         ) : (
           <div className="h-full flex items-center justify-center text-gray-500">
