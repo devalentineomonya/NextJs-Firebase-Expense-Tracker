@@ -51,26 +51,23 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isAuthenticated) {
-    // First check email verification status
+
     if (!emailVerified) {
       if (pathname !== "/auth/verify") {
         return NextResponse.redirect(new URL("/auth/verify", request.url));
       }
     } else {
-      // If email is verified, redirect away from /auth/verify
-      if (pathname === "/auth/verify") {
+    if (pathname === "/auth/verify") {
         return NextResponse.redirect(
           new URL(DEFAULT_LOGIN_REDIRECT, request.url)
         );
       }
 
-      // Then check profile completion status
       if (!isProfileComplete && pathname !== "/profile") {
         return NextResponse.redirect(new URL("/profile", request.url));
       }
     }
 
-    // Redirect authenticated users from public routes
     if (PUBLIC_ROUTES.includes(pathname)) {
       const redirectUrl = emailVerified
         ? DEFAULT_LOGIN_REDIRECT
@@ -78,7 +75,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL(redirectUrl, request.url));
     }
   } else {
-    // Handle unauthenticated users
+ 
     if (!PUBLIC_ROUTES.includes(pathname)) {
       let callbackUrl = pathname;
       if (request.nextUrl.search) {
