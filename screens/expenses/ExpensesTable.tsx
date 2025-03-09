@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
-  DownloadIcon,
   PlusIcon,
   SearchIcon,
   Trash,
@@ -41,7 +40,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { exportToCSV } from "@/lib/utils";
+import { exportData } from "@/lib/utils";
 import {
   useReactTable,
   getCoreRowModel,
@@ -51,7 +50,7 @@ import {
   ColumnDef,
   flexRender,
 } from "@tanstack/react-table";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import ExpensesPagination from "./ExpensesPagination";
@@ -66,21 +65,22 @@ import {
   doc,
 } from "firebase/firestore";
 import { useCollection } from "react-firebase-hooks/firestore";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Expense } from "@/types/Expenses";
 import { toast } from "sonner";
 import ExportButton from "@/components/common/exportButton/ExportButton";
+import TableLoading from "@/components/common/loader/TableLoading";
 
 const ExpensesTable = () => {
   const [user] = useAuthState(auth);
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [globalFilter, setGlobalFilter] = useState("");
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
   });
+  const [exportType, setExportType] = useState<"csv" | "excel" | "pdf">();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [referenceFilter, setReferenceFilter] = useState("");
 
   const { onOpen, onEdit } = useExpenseModal();
 
@@ -101,6 +101,7 @@ const ExpensesTable = () => {
           ({
             id: doc.id,
             ...doc.data(),
+            dateSpent: doc.data().dateSpent.toDate(),
           } as Expense)
       ) || [],
     [expenses]
@@ -146,10 +147,9 @@ const ExpensesTable = () => {
       accessorKey: "paymentMethod",
       header: "Payment Mode",
     },
-
     {
       accessorKey: "expenditureType",
-      header: "ExpenditureType",
+      header: "Expenditure Type",
       cell: ({ row }) => <Badge>{row.original.expenditureType}</Badge>,
     },
     {
@@ -159,7 +159,11 @@ const ExpensesTable = () => {
     {
       accessorKey: "dateSpent",
       header: "Date Spent",
-      cell: ({ row }) => format(row.original.dateSpent.toDate(), "PPPPpppp"),
+      cell: ({ row }) => {
+        const date = row.original.dateSpent;
+        if (!date) return "N/A";
+        return format(date, "PPPPpppp");
+      },
     },
     {
       id: "actions",
@@ -197,41 +201,41 @@ const ExpensesTable = () => {
     columns,
     state: {
       sorting,
-      globalFilter,
+      columnFilters: [
+        {
+          id: "referenceNumber",
+          value: referenceFilter,
+        },
+      ],
       pagination,
     },
     onSortingChange: setSorting,
-    onGlobalFilterChange: setGlobalFilter,
     onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
   });
 
-  const handleExport = () => {
-    const exportData = expensesData.map((expense) => ({
+  useEffect(() => {
+    const dataToExport = expensesData.map((expense) => ({
       Amount: expense.amount,
-      "Date Spent": format(expense.dateSpent.toDate(), "PPPPpppp"),
+      "Date Spent": format(expense.dateSpent, "PPPPpppp"),
       "Expenditure Type": expense.expenditureType,
       "Payment Method": expense.paymentMethod,
       "Reference Number": expense.referenceNumber,
     }));
-
-    exportToCSV(exportData, "expenses");
-  };
+    if (exportType) {
+      exportData(dataToExport, "expenses", exportType);
+    }
+  }, [exportType, expensesData]);
 
   if (loading) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-[200px]" />
-        <Skeleton className="h-[300px] w-full" />
-      </div>
-    );
+    return <TableLoading />;
   }
 
   if (error) {
     return (
-      <div className="max-w-md text-xs font-light text-red-500">
+      <div className="max-w-md text-base font-medium text-red-500">
         Error loading expenses: {error.message}
       </div>
     );
@@ -248,8 +252,8 @@ const ExpensesTable = () => {
               <Input
                 placeholder="Search reference..."
                 className="pl-8"
-                value={globalFilter}
-                onChange={(e) => setGlobalFilter(e.target.value)}
+                value={referenceFilter}
+                onChange={(e) => setReferenceFilter(e.target.value)}
               />
             </div>
           </div>
@@ -257,9 +261,9 @@ const ExpensesTable = () => {
         <div className="flex items-center flex-col gap-2">
           <Button variant="outline" onClick={onOpen}>
             <PlusIcon className="mr-2 h-4 w-4" />
-            Ne Expense
+            New Expense
           </Button>
-          <ExportButton />
+          <ExportButton setExportType={setExportType} />
         </div>
       </CardHeader>
       <CardContent className="mt-6 px-0">
