@@ -17,14 +17,12 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
-  DownloadIcon,
   PlusIcon,
   SearchIcon,
   Trash,
   Pencil,
   MoreVertical,
 } from "lucide-react";
-import { exportToCSV } from "@/lib/utils";
 import {
   useReactTable,
   getCoreRowModel,
@@ -65,10 +63,12 @@ import {
 } from "firebase/firestore";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { format } from "date-fns";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { Transaction } from "@/types/Transactions";
+import ExportButton from "@/components/common/exportButton/ExportButton";
+import { exportData } from "@/lib/utils";
+import TableLoading from "@/components/common/loader/TableLoading";
 
 const TransactionTable = () => {
   const [user] = useAuthState(auth);
@@ -80,6 +80,8 @@ const TransactionTable = () => {
     pageIndex: 0,
     pageSize: 10,
   });
+
+  const [exportType, setExportType] = useState<"csv" | "excel" | "pdf">();
 
   const transactionsQuery = user
     ? query(
@@ -218,8 +220,8 @@ const TransactionTable = () => {
     getPaginationRowModel: getPaginationRowModel(),
   });
 
-  const handleExport = () => {
-    const exportData = (transactionsData || []).map(
+  const handleExport = useCallback(() => {
+    const dataToExport = (transactionsData || []).map(
       (transaction: Transaction) => ({
         Amount: transaction.amount,
         "Receiver Name": transaction.receiverName,
@@ -230,16 +232,17 @@ const TransactionTable = () => {
       })
     );
 
-    exportToCSV(exportData, "transactions");
-  };
+    if (exportType) {
+      exportData(dataToExport, "transactions", exportType);
+    }
+  }, [transactionsData, exportType]);
+
+  useEffect(() => {
+    handleExport();
+  }, [exportType, handleExport]);
 
   if (loading) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-[200px]" />
-        <Skeleton className="h-[300px] w-full" />
-      </div>
-    );
+    return <TableLoading />;
   }
 
   if (error) {
@@ -272,10 +275,7 @@ const TransactionTable = () => {
             <PlusIcon className="mr-2 h-4 w-4" />
             Transaction
           </Button>
-          <Button onClick={handleExport}>
-            <DownloadIcon className="mr-2 h-4 w-4" />
-            Report CSV
-          </Button>
+          <ExportButton setExportType={setExportType} />
         </div>
       </CardHeader>
       <CardContent className="mt-6 px-0">
