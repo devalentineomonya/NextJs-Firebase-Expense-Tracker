@@ -17,14 +17,12 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
-  DownloadIcon,
   PlusIcon,
   SearchIcon,
   Trash,
   Pencil,
   MoreVertical,
 } from "lucide-react";
-import { exportToCSV } from "@/lib/utils";
 import {
   useReactTable,
   getCoreRowModel,
@@ -33,6 +31,7 @@ import {
   SortingState,
   ColumnDef,
   flexRender,
+  ColumnFiltersState,
 } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { useIncomeModal } from "@/lib/zustand/use-income";
@@ -64,22 +63,26 @@ import {
 } from "firebase/firestore";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { format } from "date-fns";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { Income } from "@/types/Income";
 import IncomePagination from "./IncomePagination";
+import ExportButton from "@/components/common/exportButton/ExportButton";
+import { exportData } from "@/lib/utils";
+import TableLoading from "@/components/common/loader/TableLoading";
 
 const IncomeTable = () => {
   const [user] = useAuthState(auth);
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [globalFilter, setGlobalFilter] = useState("");
+  const [globalFilter, setGlobalFilter] = useState<ColumnFiltersState>([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
   });
+
+  const [exportType, setExportType] = useState<"csv" | "excel" | "pdf">();
 
   const incomesQuery = user
     ? query(
@@ -209,25 +212,21 @@ const IncomeTable = () => {
     getPaginationRowModel: getPaginationRowModel(),
   });
 
-  const handleExport = () => {
-    const exportData = incomesData.map((income) => ({
+  useEffect(() => {
+    const exportedData = incomesData.map((income) => ({
       Source: income.source,
       Amount: income.amount,
       Period: income.period,
       Schedule: income.schedule,
       "Last Updated": format(income.createdAt.toDate(), "PPPPpppp"),
     }));
-
-    exportToCSV(exportData, "incomes");
-  };
+    if (exportType) {
+      exportData(exportedData, "incomes", exportType);
+    }
+  }, [incomesData, exportType]);
 
   if (loading) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-[200px]" />
-        <Skeleton className="h-[300px] w-full" />
-      </div>
-    );
+    return <TableLoading />;
   }
 
   if (error) {
@@ -249,8 +248,12 @@ const IncomeTable = () => {
               <Input
                 placeholder="Search sources..."
                 className="pl-8"
-                value={globalFilter}
-                onChange={(e) => setGlobalFilter(e.target.value)}
+                value={
+                  (table.getColumn("source")?.getFilterValue() as string) ?? ""
+                }
+                onChange={(event) =>
+                  table.getColumn("source")?.setFilterValue(event.target.value)
+                }
               />
             </div>
           </div>
@@ -260,10 +263,7 @@ const IncomeTable = () => {
             <PlusIcon className="mr-2 h-4 w-4" />
             Add Income
           </Button>
-          <Button onClick={handleExport}>
-            <DownloadIcon className="mr-2 h-4 w-4" />
-            Export CSV
-          </Button>
+          <ExportButton setExportType={setExportType} />
         </div>
       </CardHeader>
       <CardContent className="mt-6 px-0">
