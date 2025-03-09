@@ -2,23 +2,46 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Send } from "lucide-react";
-const ExportButton = () => {
+import { Button } from "@/components/ui/button";
+
+const ExportButton = ({
+  setExportType,
+}: {
+  setExportType: (type: "csv" | "excel" | "pdf") => void;
+}) => {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger>
-        <Send className="w-4 h-4" />
-        Export AS
+      <DropdownMenuTrigger asChild>
+        <Button variant="default">
+          <Send className="w-4 h-4" />
+          Export Report
+        </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent>
-        <DropdownMenuLabel>PDF</DropdownMenuLabel>
+      <DropdownMenuContent className="w-[9.5rem]">
+        <DropdownMenuItem
+          className="cursor-pointer"
+          onClick={() => setExportType("pdf")}
+        >
+          PDF
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>CSV</DropdownMenuItem>
-        <DropdownMenuItem>Excel</DropdownMenuItem>
+        <DropdownMenuItem
+          className="cursor-pointer"
+          onClick={() => setExportType("csv")}
+        >
+          CSV
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="cursor-pointer"
+          onClick={() => setExportType("excel")}
+        >
+          Excel
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
