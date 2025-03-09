@@ -37,8 +37,8 @@ const exportToCSV = <T extends Record<string, unknown>>(
   fileName: string
 ) => {
   const csvContent = [
-    Object.keys(data[0] || {}).join(","), // Headers
-    ...data.map((item) => Object.values(item).join(",")), // Rows
+    Object.keys(data[0] || {}).join(","),
+    ...data.map((item) => Object.values(item).join(","))
   ].join("\n");
 
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -51,13 +51,11 @@ const exportToExcel = <T extends Record<string, unknown>>(
 ) => {
   let tableHTML = "<table border='1'><tr>";
 
-    // Add table headers
   tableHTML +=
     Object.keys(data[0] || {})
       .map((header) => `<th>${header}</th>`)
       .join("") + "</tr>";
 
-  // Add table rows
   tableHTML += data
     .map(
       (row) =>
@@ -82,13 +80,12 @@ const exportToPDF = <T extends Record<string, unknown>>(
 
   let html = `<html><head><title>${fileName}</title></head><body><h1>${fileName}</h1><table border='1'><tr>`;
 
-  // Headers
   html +=
     Object.keys(data[0] || {})
       .map((header) => `<th>${header}</th>`)
       .join("") + "</tr>";
 
-  // Rows
+
   html += data
     .map(
       (row) =>
