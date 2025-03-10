@@ -53,7 +53,7 @@ const IncomeAndExpense = () => {
   const [expensesSnapshot, expensesLoading, expensesError] = useCollection(expensesQuery);
 
   const { chartData, netSavings } = useMemo(() => {
-    // Initialize all months with empty values
+
     const months = eachMonthOfInterval({
       start: new Date(selectedYear, 0),
       end: new Date(selectedYear, 11)
@@ -68,7 +68,6 @@ const IncomeAndExpense = () => {
     let totalIncome = 0;
     let totalExpenses = 0;
 
-    // Process income data
     incomeSnapshot?.docs.forEach((doc) => {
       const data = doc.data();
       const monthIndex = data.date.toDate().getMonth();
@@ -76,7 +75,6 @@ const IncomeAndExpense = () => {
       totalIncome += data.amount;
     });
 
-    // Process expenses data
     expensesSnapshot?.docs.forEach((doc) => {
       const data = doc.data();
       const monthIndex = data.date.toDate().getMonth();
