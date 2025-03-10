@@ -72,7 +72,6 @@ const MonthlyExpenditure = () => {
   const [selectedYear, setSelectedYear] = useState(getYear(new Date()));
   const [selectedMonth, setSelectedMonth] = useState(getMonth(new Date()));
 
-  // Generate options
   const years = Array.from(
     { length: 11 },
     (_, i) => getYear(new Date()) - 5 + i
@@ -81,7 +80,6 @@ const MonthlyExpenditure = () => {
     format(new Date(0, i), "MMMM")
   );
 
-  // Calculate month range
   const monthStart = startOfMonth(new Date(selectedYear, selectedMonth));
   const monthEnd = endOfMonth(new Date(selectedYear, selectedMonth));
   const expensesQuery = user
