@@ -7,7 +7,7 @@ import RecentTransactions from "@/screens/home/widgets/RecentTransactions";
 import Expenditure from "@/screens/home/widgets/Expenditure";
 import ActivityLogs from "@/screens/home/widgets/ActivityLogs";
 import IncomeAndExpense from "@/screens/home/widgets/IncomeAndExpense";
-import Weekly from "@/screens/home/widgets/Weekly";
+import MonthlyExpend@/screens/home/widgets/MonthlyExpendituredgets/MonthlyExpenditure";
 import ExpenseSavingsRevenue from "@/screens/home/widgets/ExpenseSavingsRevenue";
 export default function Home() {
   return (
@@ -19,7 +19,7 @@ export default function Home() {
       <ExpenseSavingsRevenue />
       <CurrentPrecipitation />
       <Pressure />
-      <Weekly />
+      <MonthlyExpenditure />
       <IncomeSources />
       <ActivityLogs />
       <RecentTransactions />
