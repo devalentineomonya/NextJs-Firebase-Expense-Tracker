@@ -88,7 +88,6 @@ const ChangePassword = () => {
       const errorMessage =
         error instanceof Error ? error.message : "Password update failed";
 
-      // Handle specific Firebase errors
       if (errorMessage.includes("requires-recent-login")) {
         toast.error("Session expired. Please log in again.");
       } else {
