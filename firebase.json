@@ -23,7 +23,10 @@
       "enabled": true,
       "port": 8800
     },
-    "singleProjectMode": true
+    "singleProjectMode": true,
+    "dataconnect": {
+      "dataDir": "dataconnect/.dataconnect/pgliteData"
+    }
   },
   "functions": [
     {
@@ -41,5 +44,8 @@
         "npm --prefix \"$RESOURCE_DIR\" run build"
       ]
     }
-  ]
+  ],
+  "dataconnect": {
+    "source": "dataconnect"
+  }
 }
