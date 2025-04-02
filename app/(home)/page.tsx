@@ -7,7 +7,7 @@ import RecentTransactions from "@/screens/home/widgets/RecentTransactions";
 import Expenditure from "@/screens/home/widgets/Expenditure";
 import ActivityLogs from "@/screens/home/widgets/ActivityLogs";
 import IncomeAndExpense from "@/screens/home/widgets/IncomeAndExpense";
-import MonthlyExpend@/screens/home/widgets/MonthlyExpendituredgets/MonthlyExpenditure";
+import MonthlyExpenditure from "@/screens/home/widgets/MonthlyExpenditure"
 import ExpenseSavingsRevenue from "@/screens/home/widgets/ExpenseSavingsRevenue";
 export default function Home() {
   return (
