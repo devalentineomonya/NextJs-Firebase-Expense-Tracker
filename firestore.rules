@@ -2,42 +2,51 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
     function isOwner() {
       return request.auth != null &&
-             resource.data.userId != null &&
+             resource.data.userId is string &&
              request.auth.uid == resource.data.userId;
     }
 
     function isCreatingOwnDocument() {
       return request.auth != null &&
+             request.resource.data.userId is string &&
              request.resource.data.userId == request.auth.uid;
     }
 
-    // User profile rules
+    function userIdMatchesPath(userId) {
+      return request.resource.data.userId == userId;
+    }
+
     match /users/{userId} {
       allow read, update, delete: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null && userId == request.auth.uid;
+      allow create: if request.auth != null &&
+                      userId == request.auth.uid &&
+                      userIdMatchesPath(userId);
+      allow update: if request.auth != null &&
+                      request.auth.uid == userId &&
+                      userIdMatchesPath(userId);
     }
 
-    // Transactions rules (now case-correct)
     match /transactions/{transactionId} {
-      allow read, create, update, delete: if isOwner();
-    }
-
-     match /expenses/{expenseId} {
       allow read: if isOwner();
-      allow create: if isValidNewDocument();
-      allow update, delete: if isOwner();
+      allow create: if isCreatingOwnDocument();
+      allow update: if isOwner() && userIdMatchesPath(resource.data.userId);
+      allow delete: if isOwner();
     }
 
+    match /expenses/{expenseId} {
+      allow read: if isOwner();
+      allow create: if isCreatingOwnDocument();
+      allow update: if isOwner() && userIdMatchesPath(resource.data.userId);
+      allow delete: if isOwner();
+    }
 
-    // Income rules (now case-consistent)
     match /income/{incomeId} {
-      allow read, create, update, delete: if isOwner();
+      allow read: if isOwner();
+      allow create: if isCreatingOwnDocument();
+      allow update: if isOwner() && userIdMatchesPath(resource.data.userId);
+      allow delete: if isOwner();
     }
-
-    // Remove duplicate rules for capitalized collections
-    // (Firestore is case-sensitive, so these were creating separate rules)
   }
 }
