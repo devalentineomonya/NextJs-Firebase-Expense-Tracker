@@ -82,18 +82,18 @@ const MonthlyExpenditure = () => {
 
   const monthStart = startOfMonth(new Date(selectedYear, selectedMonth));
   const monthEnd = endOfMonth(new Date(selectedYear, selectedMonth));
+
   const expensesQuery = user
-  ? query(
-      collection(firestore, "expenses"),
-      where("userId", "==", user.uid),
-      where("dateSpent", ">=", Timestamp.fromDate(monthStart)),
-      where("dateSpent", "<=", Timestamp.fromDate(monthEnd)),
-      orderBy("dateSpent", "asc")
-    )
-  : null;
+    ? query(
+        collection(firestore, "expenses"),
+        where("userId", "==", user.uid),
+        where("dateSpent", ">=", Timestamp.fromDate(monthStart)),
+        where("dateSpent", "<=", Timestamp.fromDate(monthEnd)),
+        orderBy("dateSpent", "asc")
+      )
+    : null;
 
   const [expensesSnapshot, loading, error] = useCollection(expensesQuery);
-
   const { categoryData, chartData, totalMonthly } = useMemo(() => {
     if (!expensesSnapshot)
       return { categoryData: [], chartData: [], totalMonthly: 0 };

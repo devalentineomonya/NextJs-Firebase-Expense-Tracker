@@ -7,7 +7,13 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { collection, query, where, Timestamp } from "firebase/firestore";
 import { auth, firestore } from "@/lib/firebase/config";
 import { useCollection } from "react-firebase-hooks/firestore";
-import { getYear, startOfYear, endOfYear, eachMonthOfInterval, format } from "date-fns";
+import {
+  getYear,
+  startOfYear,
+  endOfYear,
+  eachMonthOfInterval,
+  format,
+} from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
@@ -17,13 +23,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-
 const IncomeAndExpense = () => {
   const [user] = useAuthState(auth);
   const [selectedYear, setSelectedYear] = useState(getYear(new Date()));
 
   // Generate year options
-  const years = Array.from({ length: 11 }, (_, i) => getYear(new Date()) - 5 + i);
+  const years = Array.from(
+    { length: 11 },
+    (_, i) => getYear(new Date()) - 5 + i
+  );
 
   // Calculate year range
   const yearStart = startOfYear(new Date(selectedYear, 0));
@@ -32,7 +40,7 @@ const IncomeAndExpense = () => {
   // Income query
   const incomeQuery = user
     ? query(
-        collection(firestore, "Income"),
+        collection(firestore, "income"),
         where("userId", "==", user.uid),
         where("date", ">=", Timestamp.fromDate(yearStart)),
         where("date", "<=", Timestamp.fromDate(yearEnd))
@@ -42,24 +50,25 @@ const IncomeAndExpense = () => {
   // Expenses query
   const expensesQuery = user
     ? query(
-        collection(firestore, "Expenses"),
+        collection(firestore, "expenses"),
         where("userId", "==", user.uid),
         where("date", ">=", Timestamp.fromDate(yearStart)),
         where("date", "<=", Timestamp.fromDate(yearEnd))
       )
     : null;
 
-  const [incomeSnapshot, incomeLoading, incomeError] = useCollection(incomeQuery);
-  const [expensesSnapshot, expensesLoading, expensesError] = useCollection(expensesQuery);
-
+  const [incomeSnapshot, incomeLoading, incomeError] =
+    useCollection(incomeQuery);
+  const [expensesSnapshot, expensesLoading, expensesError] =
+    useCollection(expensesQuery);
+  console.dir(expensesSnapshot, { depth: null });
   const { chartData, netSavings } = useMemo(() => {
-
     const months = eachMonthOfInterval({
       start: new Date(selectedYear, 0),
-      end: new Date(selectedYear, 11)
+      end: new Date(selectedYear, 11),
     });
 
-    const monthlyData = months.map(month => ({
+    const monthlyData = months.map((month) => ({
       month: format(month, "MMM"),
       income: 0,
       expenses: 0,
@@ -84,7 +93,7 @@ const IncomeAndExpense = () => {
 
     return {
       chartData: monthlyData,
-      netSavings: totalIncome - totalExpenses
+      netSavings: totalIncome - totalExpenses,
     };
   }, [incomeSnapshot, expensesSnapshot, selectedYear]);
 
@@ -101,7 +110,9 @@ const IncomeAndExpense = () => {
       <CardHeader className="p-0 m-0 pt-4 px-4 mb-8">
         <div className="flex justify-between items-start gap-4">
           <div>
-            <h1 className="font-semibold text-lg">KES {netSavings.toFixed(2)}</h1>
+            <h1 className="font-semibold text-lg">
+              KES {netSavings.toFixed(2)}
+            </h1>
             <p className="text-[#7c8fac] text-sm">Net Savings</p>
           </div>
           <div className="flex gap-2">
@@ -140,11 +151,13 @@ const IncomeAndExpense = () => {
               className="-ml-4"
               axisLine={false}
               tickLine={false}
-              domain={[0, 'auto']}
+              domain={[0, "auto"]}
             />
             <ChartTooltip
               cursor={false}
-              content={<ChartTooltipContent labelKey="month" indicator="line" />}
+              content={
+                <ChartTooltipContent labelKey="month" indicator="line" />
+              }
             />
             <Bar dataKey="income" fill="#49beff" radius={[6, 6, 0, 0]} />
             <Bar dataKey="expenses" fill="#5d87ff" radius={[6, 6, 0, 0]} />
